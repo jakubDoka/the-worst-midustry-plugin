@@ -1,16 +1,37 @@
 plugins {
-    kotlin("jvm") version "1.3.72"
+    kotlin("jvm") version "1.4.31"
 }
+
+
 
 repositories {
     mavenCentral()
-    maven { url = uri("https://www.jitpack.io") }
+    maven { url = uri("https://jitpack.io") }
 }
+
+val mindVer = "v126.2"
+val utilsVer = "v0.1.8"
+val exposedVer = "0.31.1"
+val junitVersion = "5.6.1"
+val klaxonVer = "5.5"
+val postgreVer = "42.2.10"
+val jsoupVer = "1.12.1"
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
-    compileOnly("com.github.Anuken.Arc:arc-core:v104.6")
-    compileOnly("com.github.Anuken.Mindustry:core:v104.6")
+
+    compileOnly("com.github.Anuken.Arc:arc-core:$mindVer")
+    compileOnly("com.github.Anuken.Mindustry:core:$mindVer")
+
+    implementation("com.beust:klaxon:$klaxonVer")
+    implementation("com.github.jakubDoka:mindustry-plugin-utils:$utilsVer")
+    implementation("org.jetbrains.exposed:exposed-core:$exposedVer")
+    implementation("org.jetbrains.exposed:exposed-dao:$exposedVer")
+    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVer")
+    implementation("org.postgresql:postgresql:$postgreVer")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
+    testImplementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
 }
 
 tasks {
@@ -24,5 +45,12 @@ tasks {
 
     jar {
         from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    }
+
+    "test"(Test::class) {
+        useJUnitPlatform {
+            includeEngines("junit-jupiter")
+        }
+        reports.html.isEnabled = true
     }
 }
