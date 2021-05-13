@@ -1,6 +1,7 @@
 package game.commands
 
 import arc.util.CommandHandler
+import bundle.Bundle
 import game.Users
 import mindustry.gen.Player
 import mindustry_plugin_utils.Logger
@@ -19,6 +20,11 @@ class Handler(val inner: CommandHandler, val users: Users, val logger: Logger, p
                     return@register
                 }
 
+                if(user.paralyzed && command.name != "account" && command.name != "help") {
+                    user.send("paralyzed")
+                    return@register
+                }
+
                 command.user = user
 
                 logger.run { command.run(a) }
@@ -26,7 +32,7 @@ class Handler(val inner: CommandHandler, val users: Users, val logger: Logger, p
         }
 
         if (Command.Kind.Cmd == kind) {
-            inner.register(command.name,  "${command.name}.args", "${command.name}.desc"){
+            inner.register(command.name,  Bundle.translate("${command.name}.args"), Bundle.translate("${command.name}.desc")){
                 logger.run { command.run(it) }
             }
         }

@@ -27,7 +27,7 @@ class User(val inner: Player, val data: Driver.RawUser, val testing: Boolean = f
 
     fun alert(plainText: String) {
         if(testing)
-            println(plainText)
+            println(Templates.cleanColors(plainText))
         else
             Call.infoMessage(inner.con, plainText)
     }
@@ -42,7 +42,7 @@ class User(val inner: Player, val data: Driver.RawUser, val testing: Boolean = f
 
     fun sendPlain(plainText: String) {
         if(testing)
-            println(plainText)
+            println(Templates.cleanColors(plainText))
         else
             inner.sendMessage(plainText)
     }

@@ -13,6 +13,6 @@ class DriverTest() {
     fun init() {
         val u = users.test("ip", "name")
 
-        assert(driver.searchUsers(u.inner).size == 1)
+        assert(driver.users.search(u.inner).size == 1)
     }
 }

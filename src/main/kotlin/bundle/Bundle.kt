@@ -1,5 +1,6 @@
 package bundle
 
+import mindustry_plugin_utils.Templates
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -9,19 +10,26 @@ import java.util.*
 // bundle.Bundle handles simple string loading and also holds custom bundle control
 class Bundle(locale: String = "en_US") {
     companion object {
-        val bundlePath = "TWS.bundle"
+        private const val bundlePath = "TWS.bundle"
         val defaultBundle = Bundle()
 
         fun send(key: String, vararg args: Any) {
-            println(translate(key, *args))
+            println(Templates.cleanColors(translate(key, *args)))
         }
 
         fun translate(key: String, vararg args: Any): String {
             return String.format(defaultBundle.get(key), *args)
         }
+
+        fun translateOr(s: String, o: String): String {
+            if(defaultBundle.missing(s)) {
+                return o
+            }
+            return defaultBundle.get(s)
+        }
     }
 
-    val bundle: ResourceBundle
+    private val bundle: ResourceBundle
 
     init {
         bundle = ResourceBundle.getBundle(bundlePath, Locale(locale), UTF8Control())

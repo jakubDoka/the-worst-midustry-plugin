@@ -5,14 +5,20 @@ import db.Ranks
 import game.Users
 import java.lang.Long.parseLong
 
-class SetRank(val driver: Driver, val users: Users, val ranks: Ranks): Command("setrank") {
+class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): Command("setrank") {
     override fun run(args: Array<String>): Enum<*> {
         if(kind == Kind.Game && !user!!.data.rank.admin) {
             send("setrank.denied")
             return Result.Denied
         }
 
-        val exists = driver.userExists(args[0])
+        if (notNum(args[0], 0)) {
+            return Generic.NotAInteger
+        }
+
+        val id = num(args[0])
+
+        val exists = driver.users.exists(id)
         if(!exists) {
             send("setrank.notFound")
             return Result.NotFound
@@ -29,18 +35,23 @@ class SetRank(val driver: Driver, val users: Users, val ranks: Ranks): Command("
             return Result.NotMutable
         }
 
-        driver.setRank(parseLong(args[0]), rank)
+        val old = driver.users[id].rank
 
-        val target = users.find(args[0])
-        if(target != null) {
-            users.reload(target)
+        driver.users[id].rank = rank
+
+        post {
+            val target = users.find(id)
+            if(target != null) {
+                users.reload(target)
+            }
         }
 
-        send("setrank.success", )
-        return Result.Success
+        send("setrank.success", driver.users[id].name, old.postfix, rank.postfix)
+
+        return Generic.Success
     }
 
     enum class Result {
-        Denied, NotFound, InvalidRank, Success, NotMutable
+        Denied, NotFound, InvalidRank, NotMutable
     }
 }

@@ -13,7 +13,7 @@ class Execute(val driver: Driver): Command("execute") {
         return try{
             val res = driver.exec(args[0])
             send("execute.success", res)
-            Result.Success
+            Generic.Success
         } catch (e: Exception) {
             send("execute.failed", e.message ?: "error does not even have message")
             Result.Failed
@@ -21,6 +21,6 @@ class Execute(val driver: Driver): Command("execute") {
     }
 
     enum class Result {
-        Denied, Failed, Success
+        Denied, Failed
     }
 }

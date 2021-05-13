@@ -2,22 +2,29 @@ package game.commands
 
 import bundle.Bundle
 import com.beust.klaxon.Klaxon
+import db.Driver
 import discord4j.core.`object`.entity.Message
 import mindustry_plugin_utils.Messenger
+import mindustry_plugin_utils.Templates
 import mindustry_plugin_utils.discord.Handler
 import util.Fs
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
 
-class Discord(configPath: String) {
+class Discord(configPath: String = "") {
     var handler: Handler? = null
     lateinit var messenger: Messenger
     var config: Config
+    val verificationQueue = HashMap<Long, CodeData>()
 
     init {
         try {
             config = Klaxon().parse<Config>(File(configPath))!!
             initMessenger(config.verbose)
+        } catch (e: IOException) {
+            config = Config()
+            Fs.createDefault(configPath, config)
         } catch (e: FileNotFoundException) {
             config = Config()
             Fs.createDefault(configPath, config)
@@ -57,6 +64,8 @@ class Discord(configPath: String) {
         })
     }
 
+    class CodeData(val code: String = "", val id: String = "")
+
     class Config(
         val disabled: Boolean = true,
         val verbose: Boolean = false,
@@ -71,5 +80,5 @@ fun Message.send(key: String, vararg args: Any) {
 }
 
 fun Message.plainReply(text: String) {
-    channel.block()?.createMessage(text)?.block()
+    channel.block()?.createMessage(Templates.cleanColors(text))?.block()
 }

@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import util.Fs
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
 import java.lang.Long.parseLong
 import java.lang.StringBuilder
 import java.sql.ResultSet
@@ -25,6 +26,7 @@ class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolea
     private lateinit var messenger: Messenger
     private val con: Database
     private val outlook = Outlook()
+    val users = Manager.UserManager(ranks, outlook, testing)
 
     // loads the config and opens db connection
     init {
@@ -32,6 +34,9 @@ class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolea
             config = Klaxon().parse<Config>(File(configPath))!!
             initMessenger(config.verbose)
         } catch (e: FileNotFoundException) {
+            config = Config()
+            Fs.createDefault(configPath, config)
+        } catch (e: IOException) {
             config = Config()
             Fs.createDefault(configPath, config)
         } catch (e: Exception) {
@@ -57,74 +62,7 @@ class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolea
         messenger = Messenger("DatabaseDriver", "enable verbose by adding '\"verbose\": true' to config", verbose)
     }
 
-    fun setRank(id: Long, value: Ranks.Rank) {
-        transaction {
-            Users.update({ Users.id eq id }) {
-                when (value.kind) {
-                    Ranks.Kind.Normal -> it[rank] = value.name
-                    Ranks.Kind.Premium -> it[premium] = value.name
-                    else -> {}
-                }
-            }
-        }
-    }
 
-    // get rank returns rank of give id of newcomer if rank si invalid, it also fixes rank to newcomer if that happens
-    fun getRank(id: Long): Ranks.Rank {
-        return ranks[transaction {
-            Users.slice(Users.rank).select{Users.id eq id}.first()[Users.rank]
-        }] ?: run {
-            setRank(id, ranks.default)
-            ranks.default
-        }
-    }
-
-    // returns whether user with this id exists
-    fun userExists(id: String): Boolean {
-        return Strings.canParseInt(id) && transaction { Users.select {Users.id eq parseLong(id)}.count() > 0 }
-    }
-
-    // newUser creates user with set and done name, ip address and uuid can be changed,
-    // newly created user is also passed to lookout to localize him and find out a best bundle
-    fun newUser(player: Player): RawUser {
-        return transaction {
-            val time = Time.millis().toString()
-            val id = Users.insertAndGetId {
-                it[uuid] = if(testing) time else player.uuid()
-                it[ip] = player.con.address
-                it[name] = player.name
-            }.value
-
-            runBlocking {
-                outlook.input.send(Outlook.Request(player.con.address, id))
-            }
-
-            val u = loadUser(id)
-            if (testing) u.uuid = time
-            u
-        }
-    }
-
-    // loadUser loads a user by id
-    fun loadUser(id: Long): RawUser {
-        return transaction {
-            RawUser(ranks, Users.slice(Users.id, Users.name, Users.rank, Users.locale).select { Users.id eq id }.first())
-        }
-    }
-
-    // searchUser
-    fun searchUsers(player: Player): Seq<RawUser> {
-        return transaction {
-            val values = Seq<RawUser>()
-            Users.slice(Users.id, Users.name, Users.rank, Users.locale).select {
-                Users.uuid.eq(player.uuid()) or Users.ip.eq(player.con.address)
-            }.forEach{
-                values.add(RawUser(ranks, it))
-            }
-
-            values
-        }
-    }
 
     fun fmtRS(rs: ResultSet): String {
         val sb = StringBuilder()
@@ -176,7 +114,7 @@ class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolea
 
     // banned returns whether player is banned on this server
     fun banned(player: Player): Boolean {
-        return transaction { banned(player.uuid()) || banned(player.con.address) }
+        return transaction { banned(player.uuid()) || banned(player.con.address.subnet()) }
     }
 
     // ban bans the player
@@ -194,13 +132,33 @@ class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolea
 
     // banned returns whether siring is in death note
     fun banned(value: String): Boolean {
-        return transaction { Bans.select {Bans.value eq value}.empty() } 
+        return transaction { !Bans.select {Bans.value eq value}.empty() }
     }
 
     // Subnet returns subnet part of ip address
     fun String.subnet(): String {
+        if (!contains(".")) return ""
         return substring(0, lastIndexOf('.'))
     }
+
+    fun login(id: Long, player: Player) {
+        transaction {
+            Users.update({ Users.id eq id }){
+                it[name] = player.name
+                it[uuid] = player.uuid()
+                it[ip] = player.con.address
+            }
+        }
+    }
+
+    fun logout(data: RawUser) {
+        transaction {
+            Users.update({ Users.id eq data.id }){
+                it[ip] = "logged.off"
+            }
+        }
+    }
+
 
     // Config holds database config
     class Config(
@@ -212,6 +170,7 @@ class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolea
 
     // Users is definition of user table (Exposed framework macro)
     object Users : LongIdTable() {
+        val noDiscord = "none"
         val noPassword = "none"
         val defaultRank = "newcomer"
         val noPremium = "none"
@@ -219,8 +178,10 @@ class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolea
         val defaultLocale = "en_Us"
 
         val name = text("name")
-        val uuid = text("uuid").uniqueIndex()
+        val uuid = text("uuid").index()
+        val discord = text("discord").index().default(noDiscord)
         val ip = text("ip").index()
+        val bornDate = long("bornDate")
 
         val password = text("password").default(noPassword)
         val rank = text("rank").default(defaultRank)

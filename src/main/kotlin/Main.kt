@@ -32,6 +32,7 @@ class Main : Plugin() {
         game.reg(Help(game))
         game.reg(Execute(driver))
         game.reg(SetRank(driver, users, ranks))
+        game.reg(Account(driver, users, discord))
     }
 
     override fun registerServerCommands(handler: CommandHandler) {

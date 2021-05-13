@@ -17,7 +17,7 @@ class Users(private val driver: Driver, private val logger: Logger, val ranks: R
 
     init {
         logger.on(EventType.PlayerConnect::class.java) {
-            loadUser(it.player)
+            load(it.player)
         }
 
         // clean users every now and then
@@ -27,13 +27,13 @@ class Users(private val driver: Driver, private val logger: Logger, val ranks: R
     }
 
     fun reload(target: User) {
-        loadUser(target.inner)
+        load(target.inner)
     }
 
-    fun find(id: String): User? {
+    fun find(id: Long): User? {
         var user: User? = null
         forEach { _, u ->
-            if(u.inner.name.endsWith(id)) {
+            if(u.data.id == id) {
                 user = u
                 return@forEach
             }
@@ -49,17 +49,17 @@ class Users(private val driver: Driver, private val logger: Logger, val ranks: R
             override fun close() {}
         }
 
-        val ru = driver.newUser(p)
+        val ru = driver.users.new(p)
         val u = User(p, ru, true)
         put(u.data.uuid, u)
 
         return u
     }
 
-    fun loadUser(player: Player) {
-        val existing = driver.searchUsers(player)
+    fun load(player: Player) {
+        val existing = driver.users.search(player)
         val user = when (existing.size) {
-            0 -> User(player, driver.newUser(player))
+            0 -> User(player, driver.users.new(player))
             1 -> User(player, existing[0])
             else -> {
                 val sb = StringBuffer()
@@ -70,7 +70,8 @@ class Users(private val driver: Driver, private val logger: Logger, val ranks: R
                         .append(" [gray]")
                         .append(e.name)
                         .append(" [white]")
-                        .append(e.rank)
+                        .append(e.rank.postfix)
+                        .append("\n")
                 }
                 val u = User(player, Driver.RawUser(driver.ranks))
                 u.alert(u.translate("paralyzed.title"), "paralyzed.body", sb.toString())
@@ -79,22 +80,17 @@ class Users(private val driver: Driver, private val logger: Logger, val ranks: R
         }
 
         if(!user.idSpectator() && driver.banned(user.inner)) {
-            driver.setRank(user.data.id, ranks.griefer)
-            loadUser(user.inner)
+            driver.users[user.data.id].rank = ranks.griefer
+            reload(user)
             return
         }
 
         put(player.uuid(), user)
     }
 
-    fun cleanUp() {
+    private fun cleanUp() {
         filterValues {
-            if (it.inner.con.hasDisconnected) {
-                //TODO save user
-                false
-            } else {
-                true
-            }
+            !it.inner.con.hasDisconnected
         }
     }
 

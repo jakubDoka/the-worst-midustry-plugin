@@ -7,7 +7,7 @@ class Help(private val commands: Handler): Command("help") {
     private val pageLen = 7
     override fun run(args: Array<String>): Enum<*> {
         val user = user!!
-        if (isNum(args[0], 0)) {
+        if (!notNum(args[0], 0)) {
             val arr = Array(commands.inner.commandList.size) {
                 val c = commands.inner.commandList[it]
                 "[orange]${c.text}[gray]-${user.translateOr("${c.text}.args", c.paramText)}-[white]${user.translateOr("${c.text}.desc", c.description)}"

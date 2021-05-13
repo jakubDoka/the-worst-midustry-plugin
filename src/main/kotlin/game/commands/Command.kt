@@ -19,17 +19,27 @@ abstract class Command(val name: String) {
 
     // short hand for posting to main thread, this is used in bot commands
     fun post(r: () -> Unit) {
-        Core.app.post(r)
+        if(kind != Kind.Discord) r.invoke()
+        else Core.app.post(r)
+    }
+
+    fun ensure(a: Array<String>, count: Int): Boolean {
+        return if(a.size < count) {
+            send("notEnoughArgs", a.size, count)
+            true
+        } else {
+            false
+        }
     }
 
     // checks if string is valid number and notifies user if not
-    fun isNum(s: String, argument: Int): Boolean {
+    fun notNum(s: String, argument: Int): Boolean {
         return try {
             parseLong(s)
-            true
+            false
         } catch (e: Exception) {
             send("notANumber", argument)
-            false
+            true
         }
     }
 
@@ -42,7 +52,7 @@ abstract class Command(val name: String) {
     fun assert(result: Enum<*>, vararg args: String) {
         val res = run(Array(args.size) { args[it] })
         if (res != result) {
-            println("$res != $result")
+            println("got: $res expected: $result")
             assert(false)
         }
     }
@@ -67,5 +77,9 @@ abstract class Command(val name: String) {
 
     enum class Kind {
         Cmd, Game, Discord
+    }
+
+    enum class Generic {
+        Success, NotAInteger, Mismatch, NotEnough
     }
 }

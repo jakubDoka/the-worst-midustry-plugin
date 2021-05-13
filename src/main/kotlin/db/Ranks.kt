@@ -6,6 +6,7 @@ import mindustry_plugin_utils.Messenger
 import util.Fs
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
 
 // Ranks holds all game ranks that are used
 class Ranks(path: String = ""): HashMap<String, Ranks.Rank>() {
@@ -22,6 +23,8 @@ class Ranks(path: String = ""): HashMap<String, Ranks.Rank>() {
             val ranks = Klaxon().parse<HashMap<String, Rank>>(File(path))!!
             for ((k, v) in ranks) put(k, v)
         } catch (e: FileNotFoundException) {
+            Fs.createDefault(path, this)
+        } catch (e: IOException) {
             Fs.createDefault(path, this)
         } catch (e: Exception) {
             messenger.log("failed to load config file: ${e.message}")
@@ -48,7 +51,7 @@ class Ranks(path: String = ""): HashMap<String, Ranks.Rank>() {
         val sb = StringBuilder()
         forEach { _, v ->
             if(v.kind == kind)
-                sb.append(v.suffix)
+                sb.append(v.postfix)
         }
         return sb.toString()
     }
@@ -64,8 +67,8 @@ class Ranks(path: String = ""): HashMap<String, Ranks.Rank>() {
         val value: Int = 0,
         val kind: Kind = Kind.Normal,
     ) {
-        val suffix get() = "[$color]<$name>[]"
-        val display get() = if(displayed) suffix else ""
+        val postfix get() = "[$color]<$name>[]"
+        val display get() = if(displayed) postfix else ""
         val permanent get() = true
     }
 

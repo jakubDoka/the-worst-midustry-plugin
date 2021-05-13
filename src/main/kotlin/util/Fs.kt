@@ -8,7 +8,7 @@ object Fs {
     fun <T> createDefault(path: String, value: T) {
         try {
             val f = File(path)
-            f.mkdir()
+            f.parentFile.mkdirs()
             f.createNewFile()
             f.setWritable(true)
             f.writeText(Klaxon().toJsonString(value))
