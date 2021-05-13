@@ -2,14 +2,22 @@ package db
 
 import bundle.Bundle
 import arc.struct.Seq
+import arc.util.Strings
+import arc.util.Time
 import com.beust.klaxon.Klaxon
+import game.commands.Discord
 import kotlinx.coroutines.runBlocking
 import mindustry.gen.Player
 import mindustry_plugin_utils.Messenger
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import util.Fs
 import java.io.File
+import java.io.FileNotFoundException
+import java.lang.Long.parseLong
+import java.lang.StringBuilder
+import java.sql.ResultSet
 
 // Driver handles all database calls and holds information about db structure
 class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolean = false) {
@@ -23,6 +31,9 @@ class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolea
         try {
             config = Klaxon().parse<Config>(File(configPath))!!
             initMessenger(config.verbose)
+        } catch (e: FileNotFoundException) {
+            config = Config()
+            Fs.createDefault(configPath, config)
         } catch (e: Exception) {
             initMessenger(false)
             messenger.log("failed to load config")
@@ -36,8 +47,8 @@ class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolea
         con = Database.connect(url, user = config.user, password = config.password)
 
         transaction {
-            if(testing) SchemaUtils.drop(User, Bans)
-            SchemaUtils.create(User, Bans)
+            if(testing) SchemaUtils.drop(Users, Bans)
+            SchemaUtils.create(Users, Bans)
         }
 
     }
@@ -46,21 +57,40 @@ class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolea
         messenger = Messenger("DatabaseDriver", "enable verbose by adding '\"verbose\": true' to config", verbose)
     }
 
-    // markGriefer changes status of player to griefer but nothing else
-    fun markGriefer(id: Long) {
+    fun setRank(id: Long, value: Ranks.Rank) {
         transaction {
-            User.update({ User.id eq id }) {
-                it[rank] = Ranks.griefer
+            Users.update({ Users.id eq id }) {
+                when (value.kind) {
+                    Ranks.Kind.Normal -> it[rank] = value.name
+                    Ranks.Kind.Premium -> it[premium] = value.name
+                    else -> {}
+                }
             }
         }
+    }
+
+    // get rank returns rank of give id of newcomer if rank si invalid, it also fixes rank to newcomer if that happens
+    fun getRank(id: Long): Ranks.Rank {
+        return ranks[transaction {
+            Users.slice(Users.rank).select{Users.id eq id}.first()[Users.rank]
+        }] ?: run {
+            setRank(id, ranks.default)
+            ranks.default
+        }
+    }
+
+    // returns whether user with this id exists
+    fun userExists(id: String): Boolean {
+        return Strings.canParseInt(id) && transaction { Users.select {Users.id eq parseLong(id)}.count() > 0 }
     }
 
     // newUser creates user with set and done name, ip address and uuid can be changed,
     // newly created user is also passed to lookout to localize him and find out a best bundle
     fun newUser(player: Player): RawUser {
         return transaction {
-            val id = User.insertAndGetId {
-                it[uuid] = player.uuid()
+            val time = Time.millis().toString()
+            val id = Users.insertAndGetId {
+                it[uuid] = if(testing) time else player.uuid()
                 it[ip] = player.con.address
                 it[name] = player.name
             }.value
@@ -69,33 +99,59 @@ class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolea
                 outlook.input.send(Outlook.Request(player.con.address, id))
             }
 
-            loadUser(id)
+            val u = loadUser(id)
+            if (testing) u.uuid = time
+            u
         }
     }
 
     // loadUser loads a user by id
     fun loadUser(id: Long): RawUser {
         return transaction {
-            RawUser(ranks, User.slice(User.id, User.name, User.rank).select { User.id eq id }.first())
+            RawUser(ranks, Users.slice(Users.id, Users.name, Users.rank, Users.locale).select { Users.id eq id }.first())
         }
-    }
-
-    fun saveUser(user: RawUser) {
-
     }
 
     // searchUser
     fun searchUsers(player: Player): Seq<RawUser> {
         return transaction {
             val values = Seq<RawUser>()
-
-            User.slice(User.id, User.name, User.rank).select {
-                User.uuid.eq(player.uuid()).or(User.ip.eq(player.con.address)).and(User.password.neq(User.noPassword))
+            Users.slice(Users.id, Users.name, Users.rank, Users.locale).select {
+                Users.uuid.eq(player.uuid()) or Users.ip.eq(player.con.address)
             }.forEach{
                 values.add(RawUser(ranks, it))
             }
 
             values
+        }
+    }
+
+    fun fmtRS(rs: ResultSet): String {
+        val sb = StringBuilder()
+        val md = rs.metaData
+        val len = md.columnCount
+
+        while(rs.next()) {
+            for (i in 1..len) {
+                sb
+                    .append("[gray]")
+                    .append(md.getColumnName(i))
+                    .append(":[] ")
+                    .append(rs.getString(i))
+                    .append("\n")
+            }
+        }
+
+        return sb.toString()
+    }
+
+    fun exec(command: String): String {
+        return transaction {
+            var str = "nothing"
+            exec(command) {
+                str = fmtRS(it)
+            }
+            str
         }
     }
 
@@ -106,13 +162,14 @@ class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolea
         var id: Long = -1
         var rank = Ranks.paralyzed
         var bundle = Bundle()
+        var uuid: String = ""
 
         init {
             if (row != null) {
-                name = row[User.name]
-                id = row[User.id].value
-                rank = ranks[row[User.rank]] ?: Ranks.default
-                bundle = Bundle(row[User.locale])
+                name = row[Users.name]
+                id = row[Users.id].value
+                rank = ranks[row[Users.rank]] ?: ranks.default
+                bundle = Bundle(row[Users.locale])
             }
         }
     }
@@ -153,8 +210,8 @@ class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolea
         val verbose: Boolean = false,
     )
 
-    // User is definition of user table (Exposed framework macro)
-    object User : LongIdTable() {
+    // Users is definition of user table (Exposed framework macro)
+    object Users : LongIdTable() {
         val noPassword = "none"
         val defaultRank = "newcomer"
         val noPremium = "none"
@@ -167,6 +224,7 @@ class Driver(configPath: String, val ranks: Ranks = Ranks(), val testing: Boolea
 
         val password = text("password").default(noPassword)
         val rank = text("rank").default(defaultRank)
+        val specials = text("specials").default("")
         val premium = text("premium").default(noPremium)
 
         val country = text("country").default(defaultCountry)

@@ -1,14 +1,16 @@
 package db
 
 import com.beust.klaxon.Klaxon
+import game.commands.Discord
 import mindustry_plugin_utils.Messenger
+import util.Fs
 import java.io.File
+import java.io.FileNotFoundException
 
 // Ranks holds all game ranks that are used
 class Ranks(path: String = ""): HashMap<String, Ranks.Rank>() {
-    companion object {
+   companion object {
         val paralyzed = Rank("paralyzed", "#ff4d00", true, Control.None)
-        val default = Rank(Driver.User.defaultRank, "#b58e24", false, Control.Minimal)
         const val griefer = "griefer"
     }
 
@@ -19,6 +21,8 @@ class Ranks(path: String = ""): HashMap<String, Ranks.Rank>() {
         try {
             val ranks = Klaxon().parse<HashMap<String, Rank>>(File(path))!!
             for ((k, v) in ranks) put(k, v)
+        } catch (e: FileNotFoundException) {
+            Fs.createDefault(path, this)
         } catch (e: Exception) {
             messenger.log("failed to load config file: ${e.message}")
         }
@@ -27,12 +31,26 @@ class Ranks(path: String = ""): HashMap<String, Ranks.Rank>() {
     // load default ranks
     init {
         put("griefer", Rank("griefer", "##a10e0e", true, Control.None))
-        put(Driver.User.defaultRank, default)
+        put(Driver.Users.defaultRank, Rank(Driver.Users.defaultRank, "#b58e24", false, Control.Minimal))
         put("verified", Rank("verified", "#248eb5", false, Control.Normal))
         put("candidate", Rank("candidate", "#830fa3", false, Control.Normal))
         put("admin", Rank("admin", "#ff6ed3", true, Control.High, true))
         put("dev", Rank("dev", "#19a30f", true, Control.Absolute, true))
         put("owner", Rank("owner", "#d1c113", true, Control.Absolute, true))
+    }
+
+    val default get() = get(Driver.Users.defaultRank)!!
+    val griefer get() = get("griefer")!!
+    val admin get() = get("admin")!!
+
+    // enumerate lists all ranks of specific kind
+    fun enumerate(kind: Kind): String {
+        val sb = StringBuilder()
+        forEach { _, v ->
+            if(v.kind == kind)
+                sb.append(v.suffix)
+        }
+        return sb.toString()
     }
 
     // Rank holds information configured by user of plugin
@@ -56,7 +74,11 @@ class Ranks(path: String = ""): HashMap<String, Ranks.Rank>() {
     }
 
     enum class Control {
-        None, Minimal, Normal, High, Absolute
+        None, Minimal, Normal, High, Absolute;
+
+        fun mutable(): Boolean {
+            return this != High && this != Absolute
+        }
     }
 
     enum class Perm

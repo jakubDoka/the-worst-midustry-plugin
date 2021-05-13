@@ -7,9 +7,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.update
 import java.net.URL
-import db.Driver.User
+import db.Driver.Users
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import org.jetbrains.exposed.sql.transactions.transaction
 
 // Outlook handles user localization
 class Outlook() {
@@ -22,9 +23,11 @@ class Outlook() {
                 while (true) {
                     val inp = input.receive() ?: break
                     val data = localize(inp.ip)
-                    User.update({ User.id eq inp.id }) {
-                        it[country] = data.country
-                        it[locale] = data.locale
+                    transaction {
+                        Users.update({ Users.id eq inp.id }) {
+                            it[country] = data.country
+                            it[locale] = data.locale
+                        }
                     }
                 }
             }
@@ -43,12 +46,12 @@ class Outlook() {
                 else resp.languages
 
             Data(resp.country_name, locale)
-        } catch (e: IOException) {
-            Data(User.defaultCountry, User.defaultLocale)
+        } catch (e: Exception) {
+            Data(Users.defaultCountry, Users.defaultLocale)
         }
     }
 
     class Data(val country: String, val locale: String)
-    class Response(val country_name: String = User.defaultCountry, val languages: String = User.defaultLocale)
+    class Response(val country_name: String = Users.defaultCountry, val languages: String = Users.defaultLocale)
     class Request(val ip: String, val id: Long)
 }

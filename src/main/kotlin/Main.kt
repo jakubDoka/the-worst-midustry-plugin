@@ -1,45 +1,50 @@
-import arc.Events
 import arc.util.CommandHandler
-import arc.util.Log
-import bundle.Bundle
 import db.Driver
 import db.Ranks
-import game.UserStore
-import game.commands.Handler
-import mindustry.Vars
-import mindustry.content.Blocks
-import mindustry.game.EventType.BuildSelectEvent
-import mindustry.gen.Call
-import mindustry.gen.Player
+import game.Users
+import game.commands.*
 import mindustry.mod.Plugin
 import mindustry_plugin_utils.Logger
 
 
-class Main() : Plugin() {
+class Main : Plugin() {
 
     private val root = "config/mods/worst/"
     private val logger = Logger(root + "logger/config.json")
     private val ranks = Ranks(root + "ranks/config.json")
     private val driver = Driver(root + "databaseDriver/config.json", ranks)
-    private val users = UserStore(driver, logger)
+    private val users = Users(driver, logger, ranks)
+    private val discord = Discord(root + "bot/config.json")
     private lateinit var game: Handler
     private lateinit var terminal: Handler
 
 
     init {
-
+        discord.reg(Execute(driver))
+        discord.reg(SetRank(driver, users, ranks))
     }
 
     override fun registerClientCommands(handler: CommandHandler) {
-        handler.register(
-            "reply", "<text...>", "A simple ping command that echoes a player's text."
-        ) { args: Array<String>, player: Player ->
-            player.sendMessage("You said: [accent] " + args[0]);
-        }
+        bulkRemove(handler, "")
+
+        game = Handler(handler, users, logger, Command.Kind.Game)
+
+        game.reg(Help(game))
+        game.reg(Execute(driver))
+        game.reg(SetRank(driver, users, ranks))
     }
 
     override fun registerServerCommands(handler: CommandHandler) {
-        game = Handler(handler, Bundle(), users)
+        bulkRemove(handler, "help")
+
+        terminal = Handler(handler, users, logger, Command.Kind.Cmd)
+
+        terminal.reg(Execute(driver))
+        terminal.reg(SetRank(driver, users, ranks))
+    }
+
+    private fun bulkRemove(handler: CommandHandler, toRemove: String) {
+        for(s in toRemove.split(" ")) handler.removeCommand(s)
     }
 }
 

@@ -1,49 +1,37 @@
 package game.commands
 
 import arc.util.CommandHandler
-import bundle.Bundle
-import game.User.User
-import game.UserStore
+import game.Users
 import mindustry.gen.Player
+import mindustry_plugin_utils.Logger
 
-class Handler(val inner: CommandHandler, val bundle: Bundle, val users: UserStore) {
-    val commands = HashMap<String, Command>()
 
+//handler registers game and terminal commands
+class Handler(val inner: CommandHandler, val users: Users, val logger: Logger, private val kind: Command.Kind): HashMap<String, Command>() {
+
+    // registers any command
     fun reg(command: Command) {
-        val addTerminal = {
-            inner.register(command.name,  args(command), desc(command)){
-                command.run(null, it)
-            }
-        }
-
-        val addGame = {
+        if (Command.Kind.Game == kind) {
             inner.register<Player>(command.name, command.args, "") {a, p ->
-                val user = users.users[p.uuid()]
+                val user = users[p.uuid()]
                 if(user == null) {
                     p.sendMessage("[yellow] Please report that you saw this message. You cannot use command due to the bug in server.")
                     return@register
                 }
-                command.run(user, a)
+
+                command.user = user
+
+                logger.run { command.run(a) }
             }
         }
 
-        when (command.kind) {
-            Command.Kind.Game -> addGame.invoke()
-            Command.Kind.Terminal -> addTerminal.invoke()
-            Command.Kind.Both -> {
-                addGame.invoke()
-                addTerminal.invoke()
+        if (Command.Kind.Cmd == kind) {
+            inner.register(command.name,  "${command.name}.args", "${command.name}.desc"){
+                logger.run { command.run(it) }
             }
         }
 
-        commands[command.name] = command
-    }
-
-    fun args(command: Command): String {
-        return bundle.get(command.name + "-args")
-    }
-
-    fun desc(command: Command): String {
-        return bundle.get(command.name + "-desc")
+        command.kind = kind
+        put(command.name, command)
     }
 }

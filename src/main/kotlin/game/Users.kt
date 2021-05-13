@@ -1,20 +1,59 @@
 package game
 
+import arc.Core
+import arc.util.Timer
 import db.Driver
 import db.Ranks
-import game.User.User
+import game.u.User
 import mindustry.game.EventType
-import mindustry.gen.Call
 import mindustry.gen.Player
+import mindustry.net.Net
+import mindustry.net.NetConnection
 import mindustry_plugin_utils.Logger
-import mindustry_plugin_utils.Templates
 
-class UserStore(private val driver: Driver, private val logger: Logger): HashMap<String, User>() {
+// Users keeps needed data about users in ram memory
+class Users(private val driver: Driver, private val logger: Logger, val ranks: Ranks, testing: Boolean = false): HashMap<String, User>() {
+
 
     init {
         logger.on(EventType.PlayerConnect::class.java) {
             loadUser(it.player)
         }
+
+        // clean users every now and then
+        if(!testing) Timer.schedule({
+            Core.app.post { cleanUp() }
+        }, 10f)
+    }
+
+    fun reload(target: User) {
+        loadUser(target.inner)
+    }
+
+    fun find(id: String): User? {
+        var user: User? = null
+        forEach { _, u ->
+            if(u.inner.name.endsWith(id)) {
+                user = u
+                return@forEach
+            }
+        }
+        return user
+    }
+
+    fun test(ip: String = "127.0.0.1", name: String = "name"): User {
+        val p = Player.create()
+        p.name = name
+        p.con = object: NetConnection(ip) {
+            override fun send(p0: Any?, p1: Net.SendMode?) {}
+            override fun close() {}
+        }
+
+        val ru = driver.newUser(p)
+        val u = User(p, ru, true)
+        put(u.data.uuid, u)
+
+        return u
     }
 
     fun loadUser(player: Player) {
@@ -34,13 +73,13 @@ class UserStore(private val driver: Driver, private val logger: Logger): HashMap
                         .append(e.rank)
                 }
                 val u = User(player, Driver.RawUser(driver.ranks))
-                u.alert(u.translate("paralyzed.title"), "paralysed.body", sb.toString())
+                u.alert(u.translate("paralyzed.title"), "paralyzed.body", sb.toString())
                 u
             }
         }
 
         if(!user.idSpectator() && driver.banned(user.inner)) {
-            driver.markGriefer(user.data.id)
+            driver.setRank(user.data.id, ranks.griefer)
             loadUser(user.inner)
             return
         }
@@ -51,11 +90,13 @@ class UserStore(private val driver: Driver, private val logger: Logger): HashMap
     fun cleanUp() {
         filterValues {
             if (it.inner.con.hasDisconnected) {
-                driver.saveUser(it.data)
+                //TODO save user
                 false
             } else {
                 true
             }
         }
     }
+
+
 }

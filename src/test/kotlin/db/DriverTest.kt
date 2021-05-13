@@ -1,30 +1,18 @@
 package db
 
-import arc.net.Connection
-import mindustry.gen.Player
-import mindustry.net.Net
-import mindustry.net.NetConnection
+import game.Users
+import mindustry_plugin_utils.Logger
 import org.junit.jupiter.api.Test
 
 class DriverTest() {
-    private val driver = Driver("config/driver/config.json", Ranks(),true)
+    private val ranks = Ranks()
+    private val driver = Driver("config/driver/config.json", ranks,true)
+    private val users = Users(driver, Logger("/"), ranks)
 
     @Test
     fun init() {
-        val player = Player.create()
+        val u = users.test("ip", "name")
 
-        player.con = object: NetConnection("127.0.0.1") {
-            override fun send(p0: Any?, p1: Net.SendMode?) {
-                TODO("Not yet implemented")
-            }
-
-            override fun close() {
-                TODO("Not yet implemented")
-            }
-        }
-
-        driver.newUser(player)
-
-        assert(driver.searchUsers(player).size == 1)
+        assert(driver.searchUsers(u.inner).size == 1)
     }
 }

@@ -9,8 +9,16 @@ import java.util.*
 // bundle.Bundle handles simple string loading and also holds custom bundle control
 class Bundle(locale: String = "en_US") {
     companion object {
-        val defaultBundle = Bundle()
         val bundlePath = "TWS.bundle"
+        val defaultBundle = Bundle()
+
+        fun send(key: String, vararg args: Any) {
+            println(translate(key, *args))
+        }
+
+        fun translate(key: String, vararg args: Any): String {
+            return String.format(defaultBundle.get(key), *args)
+        }
     }
 
     val bundle: ResourceBundle
@@ -21,12 +29,19 @@ class Bundle(locale: String = "en_US") {
 
     // get returns key from called bundle or default bundle or returns message that key is missing
     fun get(key: String): String {
-        return if (bundle.containsKey(key))
+        val v = if (bundle.containsKey(key))
             bundle.getString(key)
         else if (defaultBundle.bundle.containsKey(key))
             defaultBundle.bundle.getString(key)
         else
             "bundle key $key is missing, so be quiet"
+
+
+        return v.replace("[o]", "[orange]").replace("[r]", "[red]").replace("[g]", "[green]")
+    }
+
+    fun missing(key: String): Boolean {
+        return !bundle.containsKey(key) && defaultBundle.bundle.containsKey(key)
     }
 
     // copied from stack overflow
