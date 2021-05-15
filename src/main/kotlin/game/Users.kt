@@ -2,6 +2,7 @@ package game
 
 import arc.Core
 import arc.util.Timer
+import cfg.Config
 import db.Driver
 import db.Ranks
 import game.u.User
@@ -12,12 +13,58 @@ import mindustry.net.NetConnection
 import mindustry_plugin_utils.Logger
 
 // Users keeps needed data about users in ram memory
-class Users(private val driver: Driver, private val logger: Logger, val ranks: Ranks, testing: Boolean = false): HashMap<String, User>() {
+class Users(private val driver: Driver, private val logger: Logger, val ranks: Ranks, val config: Config, testing: Boolean = false): HashMap<String, User>() {
 
 
     init {
         logger.on(EventType.PlayerConnect::class.java) {
             load(it.player)
+        }
+
+        logger.on(EventType.PlayerChatEvent::class.java) {
+            val user = get(it.player.uuid())!!
+            if(it.message.startsWith("/")) {
+                user.data.stats.commands++
+            } else {
+                user.data.stats.messages++
+            }
+        }
+
+        logger.on(EventType.GameOverEvent::class.java) {
+            forEach { _, u ->
+                if(u.inner.team() == it.winner) {
+                    u.data.stats.won++
+                }
+                u.data.stats.played++
+            }
+        }
+
+        logger.on(EventType.UnitDestroyEvent::class.java) {
+            var uuid: String? = null
+            if(it.unit.isPlayer) {
+                val user = get(it.unit.player.uuid())!!
+                user.data.stats.deaths++
+                uuid = user.inner.uuid()
+            }
+
+            forEach { _, u ->
+                if(u.inner.team() != it.unit.team && u.inner.uuid() != uuid) {
+                    u.data.stats.killed++
+                }
+            }
+        }
+
+        logger.on(EventType.BlockBuildEndEvent::class.java) {
+            if(!it.unit.isPlayer || it.tile.block().buildCost < config.data.minBuildCost) {
+                return@on
+            }
+
+            val user = get(it.unit.player.uuid())!!
+            if(it.breaking) {
+                user.data.stats.destroyed++
+            } else {
+                user.data.stats.build++
+            }
         }
 
         // clean users every now and then
@@ -90,7 +137,12 @@ class Users(private val driver: Driver, private val logger: Logger, val ranks: R
 
     private fun cleanUp() {
         filterValues {
-            !it.inner.con.hasDisconnected
+            if(it.inner.con.hasDisconnected) {
+                driver.users.save(it.data)
+                false
+            } else {
+                true
+            }
         }
     }
 

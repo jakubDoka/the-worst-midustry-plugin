@@ -77,6 +77,20 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
     enum class Control {
         None, Minimal, Normal, High, Absolute;
 
+        object Counter {
+            var id: Int = 0
+            fun next(): Int {
+                id++
+                return id-1
+            }
+        }
+
+        val value: Int
+
+        init {
+            value = Counter.next()
+        }
+
         fun mutable(): Boolean {
             return this != High && this != Absolute
         }

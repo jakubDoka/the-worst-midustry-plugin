@@ -17,6 +17,7 @@ class User(val inner: Player, val data: Driver.RawUser, val testing: Boolean = f
         } else {
             inner.name = data.name + data.rank.display + "[gray]#" + data.id
         }
+
     }
 
     val paralyzed: Boolean get() = -1L == data.id

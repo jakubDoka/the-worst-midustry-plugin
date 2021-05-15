@@ -3,6 +3,7 @@ import cfg.Config
 import com.beust.klaxon.Klaxon
 import db.Driver
 import db.Ranks
+import game.Filter
 import game.Users
 import game.commands.*
 import kotlinx.coroutines.GlobalScope
@@ -26,6 +27,7 @@ class Main : Plugin(), Configure.Reloadable{
     private val users = Users(driver, logger, ranks)
 
     private val config = Config()
+    private val filter = Filter(users, ranks, logger)
 
     private val discord = Discord(root + "bot/config.json")
     private val game = Handler(users, logger, Command.Kind.Game)
@@ -61,6 +63,10 @@ class Main : Plugin(), Configure.Reloadable{
                 discord.handler?.launch()
             }
         }
+    }
+
+    override fun init() {
+        filter.init()
     }
 
     override fun registerClientCommands(handler: CommandHandler) {

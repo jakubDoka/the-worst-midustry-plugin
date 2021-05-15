@@ -48,6 +48,7 @@ class Bundle(locale: String = "en_US") {
         return v.replace("[o]", "[orange]").replace("[r]", "[red]").replace("[g]", "[green]")
     }
 
+    // missing reports whether there is no key available
     fun missing(key: String): Boolean {
         return !bundle.containsKey(key) && !defaultBundle.bundle.containsKey(key)
     }

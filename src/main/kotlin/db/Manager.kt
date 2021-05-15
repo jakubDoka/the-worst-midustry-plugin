@@ -34,6 +34,10 @@ open class Manager<T: Manager.SetGet>(private val sg: T) {
                     it[bornDate] = Time.millis()
                 }.value
 
+                Driver.Progress.insert {
+                    it[owner] = id
+                }
+
                 runBlocking {
                     outlook.input.send(Outlook.Request(player.con.address, id))
                 }
@@ -74,6 +78,9 @@ open class Manager<T: Manager.SetGet>(private val sg: T) {
             }
         }
 
+        fun save(data: Driver.RawUser) {
+            data.stats.save(data.id)
+        }
 
 
         class SetGet(val ranks: Ranks): Manager.SetGet(Driver.Users) {

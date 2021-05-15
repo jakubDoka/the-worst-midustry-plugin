@@ -1,11 +1,17 @@
 package game.commands
 
+import db.Ranks
 import mindustry_plugin_utils.Json
 import mindustry_plugin_utils.Enums
 import java.io.File
 
 class Configure(val targets: Map<String, Reloadable>): Command("configure") {
     override fun run(args: Array<String>): Enum<*> {
+        if (kind == Kind.Game && user!!.data.rank.control != Ranks.Control.Absolute) {
+            send("configure.denied")
+            return Result.Denied
+        }
+
         val target = targets[args[0]]
         if (target == null) {
             val sb = StringBuilder()
@@ -48,7 +54,7 @@ class Configure(val targets: Map<String, Reloadable>): Command("configure") {
     }
 
     enum class Result {
-        Unknown, Result, Reload, View, Count
+        Unknown, Result, Reload, View, Count, Denied
     }
 
     interface Reloadable {
