@@ -1,1 +1,6 @@
-{"database" : "mtest", "password" : "helloThere", "user" : "postgres", "verbose" : false}
+{
+  "user": "\"postgres\"",
+  "verbose": "false",
+  "password": "\"helloThere\"",
+  "database": "\"mtest\""
+}

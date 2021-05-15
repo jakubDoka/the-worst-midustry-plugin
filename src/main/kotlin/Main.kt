@@ -69,7 +69,7 @@ class Main : Plugin(), Configure.Reloadable{
     }
 
     override fun registerClientCommands(handler: CommandHandler) {
-        bulkRemove(handler, "")
+        bulkRemove(handler, "help")
 
         game.init(handler)
 
@@ -81,7 +81,7 @@ class Main : Plugin(), Configure.Reloadable{
     }
 
     override fun registerServerCommands(handler: CommandHandler) {
-        bulkRemove(handler, "help")
+        bulkRemove(handler, "")
 
         terminal.init(handler)
 
