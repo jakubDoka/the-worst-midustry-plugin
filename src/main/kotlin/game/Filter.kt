@@ -45,6 +45,8 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
                 return@addActionFilter false
             }
 
+            if(it.tile == null) return@addActionFilter true
+
             if(!map.canInteract(it.tile, user)) {
                 user.send("action.interact", user.data.rank.control, Ranks.Control.Normal)
                 return@addActionFilter false
