@@ -13,7 +13,7 @@ import org.junit.jupiter.api.assertAll
 class CommandTest {
     private val driver = Driver( testing = true)
     private val ranks = Ranks()
-    private val users = Users(driver, Logger("config/logger.json"), ranks, testing = true)
+    private val users = Users(driver, Logger("config/logger.json"), ranks, Config(), testing = true)
     private val handler = Handler(users, Logger(""), Command.Kind.Game)
     private val discord = Discord()
     private val config = Config()
@@ -160,6 +160,8 @@ class CommandTest {
         ))
         c.user = users.test()
 
+        c.assert(Configure.Result.Denied, "hell")
+        c.user!!.data.rank = ranks["dev"]!!
         c.assert(Configure.Result.Unknown, "hell")
         c.assert(Configure.Result.View, "bot", "view")
         c.assert(Configure.Result.Reload, "bot", "reload")

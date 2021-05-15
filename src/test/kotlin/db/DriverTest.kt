@@ -1,5 +1,6 @@
 package db
 
+import cfg.Config
 import game.Users
 import mindustry_plugin_utils.Logger
 import org.junit.jupiter.api.Test
@@ -7,7 +8,7 @@ import org.junit.jupiter.api.Test
 class DriverTest() {
     private val ranks = Ranks()
     private val driver = Driver("config/driver/config.json", ranks,true)
-    private val users = Users(driver, Logger("/"), ranks)
+    private val users = Users(driver, Logger("/"), ranks, Config())
 
     @Test
     fun init() {

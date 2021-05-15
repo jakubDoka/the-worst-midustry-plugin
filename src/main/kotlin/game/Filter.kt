@@ -73,7 +73,7 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
         }
 
         fun canInteract(tile: Tile, user: User): Boolean {
-            return tiles[tile.y.toInt()][tile.x.toInt()].lock >= user.data.rank.control.value
+            return tiles[tile.y.toInt()][tile.x.toInt()].lock <= user.data.rank.control.value
         }
 
         fun update(tile: Tile, user: User) {

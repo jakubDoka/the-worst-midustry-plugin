@@ -85,11 +85,7 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
             }
         }
 
-        val value: Int
-
-        init {
-            value = Counter.next()
-        }
+        val value: Int = Counter.next()
 
         fun mutable(): Boolean {
             return this != High && this != Absolute
