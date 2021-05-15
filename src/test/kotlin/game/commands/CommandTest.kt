@@ -1,30 +1,41 @@
 package game.commands
 
 import arc.util.CommandHandler
+import cfg.Config
 import db.Driver
 import db.Ranks
 import game.Users
 import mindustry_plugin_utils.Logger
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 
 class CommandTest {
-    val driver = Driver("", testing = true)
-    val ranks = Ranks()
-    val users = Users(driver, Logger(""), ranks, testing = true)
-    val handler = Handler(CommandHandler("/"), users, Logger(""), Command.Kind.Game)
-    val discord = Discord()
+    private val driver = Driver( testing = true)
+    private val ranks = Ranks()
+    private val users = Users(driver, Logger("config/logger.json"), ranks, testing = true)
+    private val handler = Handler(users, Logger(""), Command.Kind.Game)
+    private val discord = Discord()
+    private val config = Config()
 
     init {
-        handler.reg(Help(handler))
+        handler.init(CommandHandler("/"))
+        handler.reg(Help(handler, discord))
         handler.reg(Execute(driver))
         handler.reg(SetRank(driver, users, ranks))
-        handler.reg(Account(driver, users, discord))
+        handler.reg(Account(driver, users, discord, config))
+        handler.reg(Configure(mapOf()))
+    }
+
+    @AfterEach
+    fun cleanup() {
+        driver.drop()
+        println("=======================================================")
     }
 
     @Test
     fun help() {
-        val h = Help(handler)
+        val h = Help(handler, discord)
         h.kind = Command.Kind.Game
         h.user = users.test()
 
@@ -50,7 +61,7 @@ class CommandTest {
 
     @Test
     fun setrank() {
-        val target = users.test("asd", "other")
+        users.test("asd", "other")
 
         val s = SetRank(driver, users, ranks)
         s.kind = Command.Kind.Game
@@ -59,17 +70,17 @@ class CommandTest {
         s.assert(SetRank.Result.Denied, "ab", "something")
         s.user!!.data.rank = ranks.admin
         s.assert(Command.Generic.NotAInteger, "ab", "something")
-        s.assert(SetRank.Result.NotFound, "10", "something")
+        s.assert(Command.Generic.NotFound, "10", "something")
         s.assert(SetRank.Result.InvalidRank, "1", "something")
         s.assert(SetRank.Result.NotMutable, "1", "admin")
         s.assert(Command.Generic.Success, "1", "verified")
 
-       assert(driver.users[1].rank.name == "verified") { driver.users[1].rank.name }
+        assert(driver.users[1].rank.name == "verified") { driver.users[1].rank.name }
     }
 
     @Test
     fun account() {
-        val s = Account(driver, users, discord)
+        val s = Account(driver, users, discord, config)
         s.kind = Command.Kind.Game
         s.user = users.test()
 
@@ -110,6 +121,8 @@ class CommandTest {
         s.assert(Command.Generic.Success, "login", "hA912345x", "1")
         s.user!!.data.id = 1
 
+        s.assert(Account.Result.Premature, "login", "new")
+        s.config.data.maturity = 0
         s.assert(Command.Generic.Success, "login", "new")
 
         s.assert(Account.Result.None, "discord", "", "")
@@ -119,5 +132,42 @@ class CommandTest {
         s.assert(Account.Result.None, "discord", "", "")
         discord.verificationQueue[1] = Discord.CodeData("1234", "asd")
         s.assert(Command.Generic.Success, "discord", "hA912345x", "1234")
+    }
+
+    @Test
+    fun link() {
+        val l = Link(driver, discord, true)
+        l.kind = Command.Kind.Cmd
+        val user = users.test()
+        l.assert(Command.Generic.NotAInteger, "h")
+        l.assert(Command.Generic.NotFound, "2")
+        l.assert(Link.Result.NoPassword, "1")
+
+        val a = Account(driver, users, discord, Config())
+        a.user = user
+        a.run(arrayOf("password", "hA912345x"))
+        a.run(arrayOf("password", "hA912345x"))
+
+        l.assert(Command.Generic.Success, "1")
+    }
+
+    @Test
+    fun configure() {
+        val c = Configure(mapOf(
+            "bot" to discord,
+            "ranks" to ranks,
+            "driver" to driver,
+        ))
+        c.user = users.test()
+
+        c.assert(Configure.Result.Unknown, "hell")
+        c.assert(Configure.Result.View, "bot", "view")
+        c.assert(Configure.Result.Reload, "bot", "reload")
+        c.assert(Configure.Result.Count, "bot", "something")
+        c.assert(Configure.Result.Result, "bot", "remove", "prefix")
+        c.assert(Configure.Result.Result, "bot", "insert", "str", "prefix", "?")
+        c.assert(Configure.Result.Result, "bot", "insert", "p", "prefix", "?")
+        c.assert(Configure.Result.Result, "bot", "h", "str", "prefix", "!")
+        c.assert(Configure.Result.Result, "bot", "remove", "str", "hello.there", "!")
     }
 }

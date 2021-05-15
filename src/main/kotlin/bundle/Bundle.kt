@@ -49,7 +49,7 @@ class Bundle(locale: String = "en_US") {
     }
 
     fun missing(key: String): Boolean {
-        return !bundle.containsKey(key) && defaultBundle.bundle.containsKey(key)
+        return !bundle.containsKey(key) && !defaultBundle.bundle.containsKey(key)
     }
 
     // copied from stack overflow

@@ -80,6 +80,6 @@ abstract class Command(val name: String) {
     }
 
     enum class Generic {
-        Success, NotAInteger, Mismatch, NotEnough
+        Success, NotAInteger, Mismatch, NotEnough, NotFound
     }
 }

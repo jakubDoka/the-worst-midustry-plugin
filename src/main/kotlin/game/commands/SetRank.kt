@@ -18,10 +18,9 @@ class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): C
 
         val id = num(args[0])
 
-        val exists = driver.users.exists(id)
-        if(!exists) {
-            send("setrank.notFound")
-            return Result.NotFound
+        if(!driver.users.exists(id)) {
+            send("notFound")
+            return Generic.NotFound
         }
 
         val rank = ranks[args[1]]
@@ -52,6 +51,6 @@ class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): C
     }
 
     enum class Result {
-        Denied, NotFound, InvalidRank, NotMutable
+        Denied, InvalidRank, NotMutable
     }
 }

@@ -1,32 +1,30 @@
 package db
 
 import com.beust.klaxon.Klaxon
-import game.commands.Discord
+import game.commands.Configure
+import mindustry_plugin_utils.Fs
 import mindustry_plugin_utils.Messenger
-import util.Fs
 import java.io.File
-import java.io.FileNotFoundException
-import java.io.IOException
 
 // Ranks holds all game ranks that are used
-class Ranks(path: String = ""): HashMap<String, Ranks.Rank>() {
-   companion object {
+class Ranks(override val configPath: String = "config/ranks.json"): HashMap<String, Ranks.Rank>(), Configure.Reloadable {
+    companion object {
         val paralyzed = Rank("paralyzed", "#ff4d00", true, Control.None)
-        const val griefer = "griefer"
     }
 
     private val messenger = Messenger("Ranks")
 
     // loads config file
     init {
+        reload()
+    }
+
+    override fun reload() {
         try {
-            val ranks = Klaxon().parse<HashMap<String, Rank>>(File(path))!!
+            val ranks = Klaxon().parse<HashMap<String, Rank>>(File(configPath))!!
             for ((k, v) in ranks) put(k, v)
-        } catch (e: FileNotFoundException) {
-            Fs.createDefault(path, this)
-        } catch (e: IOException) {
-            Fs.createDefault(path, this)
         } catch (e: Exception) {
+            Fs.createDefault(configPath, this)
             messenger.log("failed to load config file: ${e.message}")
         }
     }
@@ -51,7 +49,7 @@ class Ranks(path: String = ""): HashMap<String, Ranks.Rank>() {
         val sb = StringBuilder()
         forEach { _, v ->
             if(v.kind == kind)
-                sb.append(v.postfix)
+                sb.append(v.postfix).append(" ")
         }
         return sb.toString()
     }

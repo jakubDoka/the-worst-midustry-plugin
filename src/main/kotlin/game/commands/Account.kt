@@ -3,10 +3,9 @@ package game.commands
 import arc.util.Time
 import cfg.Config
 import db.Driver
-import db.Driver.Users.password
 import game.Users
+import mindustry_plugin_utils.Templates.time
 import org.apache.commons.codec.digest.DigestUtils
-import util.time
 import java.util.regex.Pattern
 
 // Account is game only
@@ -111,7 +110,7 @@ class Account(val driver: Driver, val users: Users, val discord: Discord, val co
                 if(args[1] == "new") {
                     if (!user.paralyzed) {
                         val liveTime = Time.millis()- driver.users[id].bornDate
-                        if (liveTime < config.maturity) {
+                        if (liveTime < config.data.maturity) {
                             send("account.login.premature", liveTime.time())
                             return Result.Premature
                         }

@@ -8,7 +8,12 @@ import mindustry_plugin_utils.Logger
 
 
 //handler registers game and terminal commands
-class Handler(val inner: CommandHandler, val users: Users, val logger: Logger, private val kind: Command.Kind): HashMap<String, Command>() {
+class Handler(val users: Users, val logger: Logger, private val kind: Command.Kind): HashMap<String, Command>() {
+    lateinit var inner: CommandHandler
+
+    fun init(handler: CommandHandler) {
+        inner = handler
+    }
 
     // registers any command
     fun reg(command: Command) {

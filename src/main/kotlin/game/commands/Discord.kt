@@ -2,32 +2,29 @@ package game.commands
 
 import bundle.Bundle
 import com.beust.klaxon.Klaxon
-import db.Driver
 import discord4j.core.`object`.entity.Message
+import discord4j.core.spec.EmbedCreateSpec
+import mindustry_plugin_utils.Fs
 import mindustry_plugin_utils.Messenger
 import mindustry_plugin_utils.Templates
 import mindustry_plugin_utils.discord.Handler
-import util.Fs
 import java.io.File
-import java.io.FileNotFoundException
-import java.io.IOException
+import java.util.function.Consumer
 
-class Discord(configPath: String = "") {
+class Discord(override val configPath: String = "config/discord.json"): Configure.Reloadable {
     var handler: Handler? = null
     lateinit var messenger: Messenger
-    var config: Config
+    lateinit var config: Config
     val verificationQueue = HashMap<Long, CodeData>()
 
     init {
+        reload()
+    }
+
+    override fun reload() {
         try {
             config = Klaxon().parse<Config>(File(configPath))!!
             initMessenger(config.verbose)
-        } catch (e: IOException) {
-            config = Config()
-            Fs.createDefault(configPath, config)
-        } catch (e: FileNotFoundException) {
-            config = Config()
-            Fs.createDefault(configPath, config)
         } catch (e: Exception) {
             initMessenger(false)
             messenger.log("failed to load config")
@@ -35,6 +32,7 @@ class Discord(configPath: String = "") {
                 e.printStackTrace()
             }
             config = Config()
+            Fs.createDefault(configPath, config)
         }
 
         if(!config.disabled) {
@@ -54,8 +52,12 @@ class Discord(configPath: String = "") {
             return
         }
 
+        val args = Bundle.translateOr("${command.name}.discord.args", command.args)
+        val desc =  Bundle.translateOr("${command.name}.discord.desc", Bundle.translate("${command.name}.desc"))
+        println(args)
+        println(desc)
         command.kind = Command.Kind.Discord
-        handler!!.reg(object: Handler.Cmd(command.name, command.args, Bundle.translate("${command.name}.desc")){
+        handler!!.reg(object: Handler.Cmd(command.name, args, desc){
             override fun run(message: Message, arguments: List<String>) {
                 command.message = message
                 command.run(Array(arguments.size) {arguments[it]})
@@ -71,7 +73,9 @@ class Discord(configPath: String = "") {
         val verbose: Boolean = false,
         val token: String = "",
         val prefix: String = "!",
-        val permissions: HashMap<String, Array<String>> = HashMap(),
+        val permissions: Map<String, List<String>> = mapOf(
+            "execute" to listOf("roleName", "otherRoleName")
+        ),
     )
 }
 
@@ -81,4 +85,16 @@ fun Message.send(key: String, vararg args: Any) {
 
 fun Message.plainReply(text: String) {
     channel.block()?.createMessage(Templates.cleanColors(text))?.block()
+}
+
+fun Message.sendPrivate(key: String, vararg args: Any) {
+    sendPrivatePlain(Bundle.translate(key, *args))
+}
+
+fun Message.sendPrivatePlain(text: String) {
+    author.get().privateChannel.block()?.createMessage(text)?.block()
+}
+
+fun Message.send(embed: Consumer<EmbedCreateSpec>) {
+    channel.block()?.createEmbed(embed)?.block()
 }
