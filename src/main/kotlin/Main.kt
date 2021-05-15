@@ -16,17 +16,16 @@ import java.io.File
 
 
 class Main : Plugin(), Configure.Reloadable{
+    private val config = Config()
 
     private val root = "config/mods/worst/"
-
-
     override val configPath = root + "config.json"
     private val logger = Logger(root + "logger/config.json")
     private val ranks = Ranks(root + "ranks/config.json")
     private val driver = Driver(root + "databaseDriver/config.json", ranks)
-    private val users = Users(driver, logger, ranks)
+    private val users = Users(driver, logger, ranks, config)
 
-    private val config = Config()
+
     private val filter = Filter(users, ranks, logger)
 
     private val discord = Discord(root + "bot/config.json")
