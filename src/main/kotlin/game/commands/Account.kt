@@ -4,6 +4,7 @@ import arc.util.Time
 import cfg.Config
 import db.Driver
 import game.Users
+import mindustry_plugin_utils.Templates
 import mindustry_plugin_utils.Templates.time
 import org.apache.commons.codec.digest.DigestUtils
 import java.util.regex.Pattern
@@ -76,7 +77,11 @@ class Account(val driver: Driver, val users: Users, val discord: Discord, val co
                     send("account.paralyzed")
                     return Result.Paralyzed
                 }
-                driver.users[id].name = args[1]
+                if(args[1].length > 25) {
+                    send("account.tooLongName")
+                    return Result.TooLongName
+                }
+                driver.users[id].name = Templates.cleanName(args[1])!!
                 users.reload(user)
                 send("account.name.success")
                 Generic.Success
@@ -174,6 +179,6 @@ class Account(val driver: Driver, val users: Users, val discord: Discord, val co
     }
 
     enum class Result {
-        NoMatch, Complain, Denied, CodeDenied, Paralyzed, None, Premature
+        NoMatch, Complain, Denied, CodeDenied, Paralyzed, None, Premature, TooLongName
     }
 }

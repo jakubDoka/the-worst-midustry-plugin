@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mindustry.mod.Plugin
 import mindustry_plugin_utils.Fs
+import mindustry_plugin_utils.Json
 import mindustry_plugin_utils.Logger
 import java.io.File
 

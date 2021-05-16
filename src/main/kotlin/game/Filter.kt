@@ -33,6 +33,8 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
         }
 
         Vars.netServer.admins.addActionFilter {
+            if(it.player == null) return@addActionFilter true
+
             val user = users[it.player.uuid()]!!
 
             if(user.data.rank == ranks.griefer) {

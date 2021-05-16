@@ -1,6 +1,8 @@
 package db
 
+import com.beust.klaxon.Json
 import com.beust.klaxon.Klaxon
+import com.fasterxml.jackson.annotation.JsonIgnore
 import game.commands.Configure
 import mindustry_plugin_utils.Fs
 import mindustry_plugin_utils.Messenger
@@ -13,11 +15,7 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
     }
 
     private val messenger = Messenger("Ranks")
-
-    // loads config file
-    init {
-        reload()
-    }
+    private val quests = Quest.Quests(this)
 
     override fun reload() {
         try {
@@ -31,13 +29,14 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
 
     // load default ranks
     init {
-        put("griefer", Rank("griefer", "##a10e0e", true, Control.None))
+        put("griefer", Rank("griefer", "#a10e0e", true, Control.None))
         put(Driver.Users.defaultRank, Rank(Driver.Users.defaultRank, "#b58e24", false, Control.Minimal))
         put("verified", Rank("verified", "#248eb5", false, Control.Normal))
         put("candidate", Rank("candidate", "#830fa3", false, Control.Normal))
         put("admin", Rank("admin", "#ff6ed3", true, Control.High, true))
         put("dev", Rank("dev", "#19a30f", true, Control.Absolute, true))
         put("owner", Rank("owner", "#d1c113", true, Control.Absolute, true))
+        reload()
     }
 
     val default get() = get(Driver.Users.defaultRank)!!
@@ -54,6 +53,10 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
         return sb.toString()
     }
 
+    fun satisfies(id: Long, rank: Rank): Boolean {
+
+    }
+
     // Rank holds information configured by user of plugin
     class Rank(
         val name: String = "error",
@@ -64,9 +67,13 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
         val perms: Set<Perm> = setOf(),
         val value: Int = 0,
         val kind: Kind = Kind.Normal,
+        val quest: Map<String, Any> = mapOf()
     ) {
+        @Json(ignored = true)
         val postfix get() = "[$color]<$name>[]"
+        @Json(ignored = true)
         val display get() = if(displayed) postfix else ""
+        @Json(ignored = true)
         val permanent get() = true
     }
 

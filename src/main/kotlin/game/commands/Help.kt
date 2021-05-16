@@ -39,12 +39,13 @@ class Help(private val commands: Handler, private val discord: Discord): Command
             return Result.Invalid
         }
         val user = user!!
-        if (!notNum(args[0], 0)) {
+        val page = if(args.isEmpty()) "1" else args[0]
+        if (!notNum(page, 0)) {
             val arr = Array(commands.inner.commandList.size) {
                 val c = commands.inner.commandList[it]
                 "[orange]${c.text}[gray] - ${user.translateOr("${c.text}.args", c.paramText)} - [white]${user.translateOr("${c.text}.desc", c.description)}"
             }
-            user.alert(Templates.page(user.translate("help.help.title"), arr, pageLen, num(args[0]).toInt()))
+            user.alert(Templates.page(user.translate("help.help.title"), arr, pageLen, num(page).toInt()))
             return Result.List
         }
 

@@ -1,5 +1,6 @@
 package db
 
+import arc.util.Time
 import bundle.Bundle
 import com.beust.klaxon.Klaxon
 import db.Driver.Progress.default
@@ -10,6 +11,7 @@ import mindustry.gen.Player
 import mindustry_plugin_utils.Messenger
 import mindustry_plugin_utils.Fs
 import mindustry_plugin_utils.Templates.time
+import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -178,7 +180,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
     )
 
     // Users is definition of user table (Exposed framework macro)
-    object Users : LongIdTable() {
+    object Users : LongIdTable(), Quest.ID {
         val noDiscord = "none"
         val noPassword = "none"
         val defaultRank = "newcomer"
@@ -199,18 +201,16 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
 
         val country = text("country").default(defaultCountry)
         val locale = text("locale").default(defaultLocale)
+        override val idColumn = id
     }
 
-    class PersonalData(val id: Long, ranks: Ranks, row: ResultRow = Users.select{Users.id eq id}.first() ) {
+    class Personal(val id: Long, ranks: Ranks, row: ResultRow = Users.select{Users.id eq id}.first() ) {
         val name = row[Users.name]
         val discord = row[Users.discord]
         val bornDate = row[Users.bornDate].time()
-
         val rank = ranks.getOrDefault(row[Users.rank], ranks.default)
-        val specials = {
-        }
+        val specials = row[Users.specials].split(" ").size
         val premium = ranks[row[Users.premium]]
-
         val country = row[Users.country]
     }
 
@@ -221,63 +221,79 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
     }
 
     // Progress stored all common stats obtained by playing game casually
-    object Progress: Table() {
-        val owner = long("owner")
+    object Progress: Table(), Quest.ID {
+        val owner = entityId("owner", long("owner"))
+        val playTime = long("playTime").default(0)
+        val silence = long("silence").default(0)
         val build = long("built").default(0)
         val destroyed = long("destroyed").default(0)
         val killed = long("killed").default(0)
         val deaths = long("deaths").default(0)
         val played = long("played").default(0)
         val won = long("won").default(0)
-        val messages = long("message").default(0)
+        val messages = long("messages").default(0)
         val commands = long("commands").default(0)
         override val primaryKey = PrimaryKey(owner)
+        override val idColumn = owner
     }
 
     object Votes: Table() {
         //TODO(counter for votes)
     }
 
+
+
     // Stats is ram representation of progress and is used to increase the counter.
     // When player disconnects, new values are saved to database
     class Stats(owner: Long = -1) {
-        // i "love" ths boiler plates
-        var build: Long = 0
-        var destroyed: Long = 0
-        var killed: Long = 0
-        var deaths: Long = 0
-        var played: Long = 0
-        var won: Long = 0
-        var messages: Long = 0
-        var commands: Long = 0
+        val joined = Time.millis()
+        val lastMessage = joined
+
+        var buil: Long = 0
+        var dest: Long = 0
+        var kill: Long = 0
+        var deat: Long = 0
+        var play: Long = 0
+        var wins: Long = 0
+        var msgs: Long = 0
+        var cmds: Long = 0
+        var pt: Long = 0
+        var slc: Long = 0
 
         init {
             if(owner != -1L) {
                 transaction {
                     val row = Progress.select { Progress.owner eq owner }.first()
-                    build = row[Progress.build]
-                    destroyed = row[Progress.destroyed]
-                    killed = row[Progress.killed]
-                    deaths = row[Progress.deaths]
-                    played = row[Progress.played]
-                    won = row[Progress.won]
-                    messages = row[Progress.messages]
-                    commands = row[Progress.commands]
+                    buil = row[Progress.build]
+                    dest = row[Progress.destroyed]
+                    kill = row[Progress.killed]
+                    deat = row[Progress.deaths]
+                    play = row[Progress.played]
+                    wins = row[Progress.won]
+                    msgs = row[Progress.messages]
+                    cmds = row[Progress.commands]
+                    pt = row[Progress.playTime]
+                    slc = row[Progress.silence]
                 }
             }
         }
 
         fun save(owner: Long) {
+            val duration = Time.millis() - joined
+            val newPlayTime = pt + duration
+            val newSilence = if(lastMessage == joined) slc + duration else Time.millis() - lastMessage
             transaction {
                 Progress.update({Progress.owner eq owner}) {
-                    it[build] = build
-                    it[destroyed] = destroyed
-                    it[killed] = killed
-                    it[deaths] = deaths
-                    it[played] = played
-                    it[won] = won
-                    it[messages] = messages
-                    it[commands] = commands
+                    it[build] = buil
+                    it[destroyed] = dest
+                    it[killed] = kill
+                    it[deaths] = deat
+                    it[played] = play
+                    it[won] = wins
+                    it[messages] = msgs
+                    it[commands] = cmds
+                    it[playTime] = newPlayTime
+                    it[silence] = newSilence
                 }
             }
         }
