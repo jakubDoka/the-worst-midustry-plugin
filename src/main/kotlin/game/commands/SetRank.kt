@@ -3,6 +3,8 @@ package game.commands
 import db.Driver
 import db.Ranks
 import game.Users
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.lang.Long.parseLong
 
 class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): Command("setrank") {
@@ -18,7 +20,9 @@ class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): C
 
         val id = num(args[0])
 
-        if(!driver.users.exists(id)) {
+        val other = users.withdraw(id)
+
+        if(other == null) {
             send("notFound")
             return Generic.NotFound
         }
@@ -34,18 +38,20 @@ class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): C
             return Result.NotMutable
         }
 
-        val old = driver.users[id].rank
+        val old = other.rank
+        other.rank = rank
 
-        driver.users[id].rank = rank
 
         post {
-            val target = users.find(id)
+            val target = users[other.uuid]
             if(target != null) {
                 users.reload(target)
+            } else {
+                driver.users.set(id, Driver.Users.rank, other.rank.name)
             }
         }
 
-        send("setrank.success", driver.users[id].name, old.postfix, rank.postfix)
+        send("setrank.success", other.name, old.postfix, rank.postfix)
 
         return Generic.Success
     }

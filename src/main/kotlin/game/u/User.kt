@@ -15,7 +15,7 @@ class User(val inner: Player, val data: Driver.RawUser, val testing: Boolean = f
         if(paralyzed) {
             inner.name += data.rank.display
         } else {
-            inner.name = data.name + data.rank.display + "[gray]#" + data.id
+            inner.name = data.name + data.display.display + "[gray]#" + data.id
         }
 
     }
@@ -62,6 +62,4 @@ class User(val inner: Player, val data: Driver.RawUser, val testing: Boolean = f
     fun idSpectator(): Boolean {
         return data.rank.control == Ranks.Control.None
     }
-
-
 }

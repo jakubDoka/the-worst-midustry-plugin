@@ -4,8 +4,10 @@ import arc.Core
 import arc.util.Timer
 import cfg.Config
 import db.Driver
+import db.Quest
 import db.Ranks
 import game.u.User
+import kotlinx.coroutines.runBlocking
 import mindustry.game.EventType
 import mindustry.gen.Player
 import mindustry.net.Net
@@ -14,7 +16,7 @@ import mindustry_plugin_utils.Logger
 
 // Users keeps needed data about users in ram memory
 class Users(private val driver: Driver, private val logger: Logger, val ranks: Ranks, val config: Config, testing: Boolean = false): HashMap<String, User>() {
-
+    val quests: Quest.Quests = Quest.Quests(ranks)
 
     init {
         logger.on(EventType.PlayerConnect::class.java) {
@@ -33,7 +35,7 @@ class Users(private val driver: Driver, private val logger: Logger, val ranks: R
         logger.on(EventType.GameOverEvent::class.java) {
             forEach { _, u ->
                 if(u.inner.team() == it.winner) {
-                    u.data.stats.won++
+                    u.data.stats.wins++
                 }
                 u.data.stats.played++
             }
@@ -63,7 +65,7 @@ class Users(private val driver: Driver, private val logger: Logger, val ranks: R
             if(it.breaking) {
                 user.data.stats.destroyed++
             } else {
-                user.data.stats.build++
+                user.data.stats.built++
             }
         }
 
@@ -74,6 +76,7 @@ class Users(private val driver: Driver, private val logger: Logger, val ranks: R
     }
 
     fun reload(target: User) {
+        target.data.save()
         load(target.inner)
     }
 
@@ -127,12 +130,26 @@ class Users(private val driver: Driver, private val logger: Logger, val ranks: R
         }
 
         if(!user.idSpectator() && driver.banned(user.inner)) {
-            driver.users[user.data.id].rank = ranks.griefer
+            user.data.rank = ranks.griefer
             reload(user)
             return
         }
 
         put(player.uuid(), user)
+        runBlocking { quests.input.send(user) }
+    }
+
+    fun withdraw(id: Long): Driver.RawUser? {
+        if(!driver.users.exists(id)) {
+            return null
+        }
+
+        val already = find(id)
+        if(already != null) {
+            return already.data
+        }
+
+        return driver.users.load(id)
     }
 
     private fun cleanUp() {

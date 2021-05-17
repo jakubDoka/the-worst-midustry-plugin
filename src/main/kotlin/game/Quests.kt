@@ -1,9 +1,14 @@
 package db
 
+import arc.Core
 import arc.util.Time
 import db.Driver.Progress
 import db.Driver.Users
 import game.u.User
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
@@ -26,43 +31,40 @@ abstract class Quest(val name: String) {
 
     abstract fun check(user: User, value: Any): String
 
-    open class Stat(name: String, private val col: Column<Long>, private val index: ID = Users): Quest(name) {
-        private val table = index as Table
+    open class Stat(name: String): Quest(name) {
         override fun check(user: User, value: Any): String {
             if(value !is Long) return error
-            return points(value - transaction { table.slice(col).select{index.idColumn eq user.data.id}.first()[col] }, user)
+            return try {
+                points(value - user.data.stats.javaClass.getField(name).getLong(user.data.stats), user)
+            } catch (e: Exception) {
+                return user.translate("quest.internalError")
+            }
         }
-
-        class Prog(name: String, col: Column<Long>): Stat(name, col, Progress)
     }
 
     class Quests(val ranks: Ranks): HashMap<String, Quest>() {
+        val input = Channel<User?>()
+
         fun reg(q: Quest) {
             put(q.name, q)
         }
 
-        fun ranks(id: Long): List<String> {
-            return transaction { Users.slice(Users.specials).select{Users.id eq id}.first()[Users.specials].split(" ") }
-        }
-
         init {
-            reg(Stat.Prog("built", Progress.build))
-            reg(Stat.Prog("destroyed", Progress.build))
-            reg(Stat.Prog("killed", Progress.build))
-            reg(Stat.Prog("deaths", Progress.build))
-            reg(Stat.Prog("played", Progress.build))
-            reg(Stat.Prog("won", Progress.build))
-            reg(Stat.Prog("message", Progress.build))
-            reg(Stat.Prog("commands", Progress.build))
+            reg(Stat("built"))
+            reg(Stat("destroyed"))
+            reg(Stat("killed"))
+            reg(Stat("deaths"))
+            reg(Stat("played"))
+            reg(Stat("wins"))
+            reg(Stat("messages"))
+            reg(Stat("commands"))
+            reg(Stat("playTime"))
+            reg(Stat("silence"))
 
             reg(object: Quest("age") {
                 override fun check(user: User, value: Any): String {
                     if(value !is Long) return error
-                    return try {
-                        points(value - user.data.stats.javaClass.getField(name).getLong(user.data.stats), user)
-                    } catch(e: Exception) {
-                        return user.translate("quest.internalError")
-                    }
+                    return points(value - user.data.age, user)
                 }
             })
 
@@ -70,10 +72,9 @@ abstract class Quest(val name: String) {
                 override fun check(user: User, value: Any): String {
                     if(value !is String) return error
                     val shouldHave = value.split(" ")
-                    val obtained = ranks(user.data.id).toSet()
                     val missing = StringBuilder()
                     for(s in shouldHave) {
-                        if (!obtained.contains(s)) missing.append(s).append(" ")
+                        if (!user.data.specials.contains(s)) missing.append(s).append(" ")
                     }
 
                     return if(missing.isNotEmpty()) {
@@ -87,7 +88,7 @@ abstract class Quest(val name: String) {
             reg(object: Quest("rankCount") {
                 override fun check(user: User, value: Any): String {
                     if(value !is Long) return error
-                    return points(value - ranks(user.data.id).size, user)
+                    return points(value - user.data.specials.size, user)
                 }
             })
 
@@ -95,16 +96,36 @@ abstract class Quest(val name: String) {
                 override fun check(user: User, value: Any): String {
                     if(value !is Long) return error
                     var total = 0
-                    for(r in ranks(user.data.id)) {
-                        total += ranks.getOrDefault(r, ranks.default).value
+                    for(r in user.data.specials) {
+                        total += ranks[r]?.value ?: 0
                     }
-                    return points(value - total)
+                    return points(value - total, user)
                 }
             })
-        }
-    }
 
-    interface ID {
-        val idColumn: Column<EntityID<Long>>
+            runBlocking {
+                GlobalScope.launch {
+                    while(true) {
+                        val user = input.receive() ?: break
+
+                        outer@ for((k, v) in ranks) {
+                            if(v.kind != Ranks.Kind.Special || user.data.specials.contains(k)) continue
+
+                            for((q, a) in v.quest) {
+                                val res = get(q)?.check(user, a)
+                                if(res != complete) {
+                                    continue@outer
+                                }
+                            }
+
+                            Core.app.post {
+                                user.data.specials.add(k)
+                                user.send("quests.obtained", v.postfix)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

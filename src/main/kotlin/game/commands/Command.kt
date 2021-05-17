@@ -7,12 +7,11 @@ import game.u.User
 import java.lang.Long.parseLong
 
 // Command is a base class for all commands and implements some common utility
-abstract class Command(val name: String) {
+abstract class Command(val name: String): Discord.Sender() {
     val args = Bundle().get("$name.args")
     var kind: Kind = Kind.Game
 
     var user: User? = null
-    var message: Message? = null
 
     // main executor of command
     abstract fun run(args: Array<String>): Enum<*>
@@ -60,7 +59,7 @@ abstract class Command(val name: String) {
     // generic send method base dof current command kind
     fun send(key: String, vararg args: Any) {
         when(kind) {
-            Kind.Discord -> message?.send(key, *args)
+            Kind.Discord -> sendDiscord(key, *args)
             Kind.Game -> user?.send(key, *args)
             Kind.Cmd -> Bundle.send(key, *args)
         }
@@ -80,6 +79,6 @@ abstract class Command(val name: String) {
     }
 
     enum class Generic {
-        Success, NotAInteger, Mismatch, NotEnough, NotFound
+        Success, NotAInteger, Mismatch, NotEnough, NotFound, NotSupported
     }
 }

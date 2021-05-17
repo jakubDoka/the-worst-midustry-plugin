@@ -13,14 +13,15 @@ import org.junit.jupiter.api.assertAll
 class CommandTest {
     private val driver = Driver( testing = true)
     private val ranks = Ranks()
-    private val users = Users(driver, Logger("config/logger.json"), ranks, Config(), testing = true)
-    private val handler = Handler(users, Logger(""), Command.Kind.Game)
+    private val logger = Logger("config/logger.json")
+    private val users = Users(driver, logger, ranks, Config(), testing = true)
+    private val handler = Handler(users, logger, Command.Kind.Game)
     private val discord = Discord()
     private val config = Config()
 
     init {
         handler.init(CommandHandler("/"))
-        handler.reg(Help(handler, discord))
+        handler.reg(Help.Game(handler))
         handler.reg(Execute(driver))
         handler.reg(SetRank(driver, users, ranks))
         handler.reg(Account(driver, users, discord, config))
@@ -35,7 +36,7 @@ class CommandTest {
 
     @Test
     fun help() {
-        val h = Help(handler, discord)
+        val h = Help.Game(handler)
         h.kind = Command.Kind.Game
         h.user = users.test()
 
@@ -75,7 +76,7 @@ class CommandTest {
         s.assert(SetRank.Result.NotMutable, "1", "admin")
         s.assert(Command.Generic.Success, "1", "verified")
 
-        assert(driver.users[1].rank.name == "verified") { driver.users[1].rank.name }
+        assert(driver.users.load(1).rank.name == "verified") { driver.users.load(1).rank.name }
     }
 
     @Test
@@ -171,5 +172,37 @@ class CommandTest {
         c.assert(Configure.Result.Result, "bot", "insert", "p", "prefix", "?")
         c.assert(Configure.Result.Result, "bot", "h", "str", "prefix", "!")
         c.assert(Configure.Result.Result, "bot", "remove", "str", "hello.there", "!")
+    }
+
+    @Test
+    fun profile() {
+        val p = Profile.Game(driver, ranks, users)
+        p.user = users.test()
+
+        fun profile(c: Command, doMe: Boolean = true) {
+            p.assert(Command.Generic.NotAInteger, "e", "f")
+            p.assert(Command.Generic.NotFound, "2", "f")
+            p.assert(Command.Generic.Mismatch, "1", "f")
+            p.assert(Profile.Result.Personal, "1", "personal")
+            p.assert(Profile.Result.Stats, "1", "stats")
+            if(doMe) p.assert(Profile.Result.Stats, "me", "stats")
+        }
+
+        profile(p)
+
+        val a = Account(driver, users, discord, config)
+        a.user = p.user
+        a.assert(Command.Generic.Success, "password", "hA912345")
+        a.assert(Command.Generic.Success, "password", "hA912345")
+
+        val l = Link(driver, discord, true)
+        l.assert(Command.Generic.Success, "1")
+
+        a.assert(Command.Generic.Success, "discord", "hA912345", discord.verificationQueue[1]!!.code)
+
+        val d = Profile.Discord(driver, ranks, users)
+        profile(d)
+
+        profile(Profile.Terminal(driver, ranks, users), false)
     }
 }

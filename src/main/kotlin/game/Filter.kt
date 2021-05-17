@@ -11,6 +11,7 @@ import java.lang.Integer.max
 import java.lang.Integer.min
 import mindustry.net.Administration.ActionType;
 import mindustry_plugin_utils.Logger
+import mindustry_plugin_utils.Templates
 
 
 // handles actions and message filtering
@@ -64,8 +65,14 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
         }
 
         Vars.netServer.admins.addChatFilter { p, s ->
+            val u = users[p.uuid()]!!
 
-            return@addChatFilter s
+            val split = u.data.display.color.split(" ")
+            if(split.size == 1) {
+                return@addChatFilter "[${u.data.display.color}]$s"
+            } else {
+                return@addChatFilter Templates.transition(s, *Array(split.size){split[it]}, density = 2)
+            }
         }
     }
 

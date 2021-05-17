@@ -1,21 +1,20 @@
 package db
 
+import cfg.Reloadable
 import com.beust.klaxon.Json
 import com.beust.klaxon.Klaxon
-import com.fasterxml.jackson.annotation.JsonIgnore
-import game.commands.Configure
 import mindustry_plugin_utils.Fs
 import mindustry_plugin_utils.Messenger
+import mindustry_plugin_utils.Templates
 import java.io.File
 
 // Ranks holds all game ranks that are used
-class Ranks(override val configPath: String = "config/ranks.json"): HashMap<String, Ranks.Rank>(), Configure.Reloadable {
+class Ranks(override val configPath: String = "config/ranks.json"): HashMap<String, Ranks.Rank>(), Reloadable {
     companion object {
         val paralyzed = Rank("paralyzed", "#ff4d00", true, Control.None)
     }
 
     private val messenger = Messenger("Ranks")
-    private val quests = Quest.Quests(this)
 
     override fun reload() {
         try {
@@ -34,7 +33,7 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
         put("verified", Rank("verified", "#248eb5", false, Control.Normal))
         put("candidate", Rank("candidate", "#830fa3", false, Control.Normal))
         put("admin", Rank("admin", "#ff6ed3", true, Control.High, true))
-        put("dev", Rank("dev", "#19a30f", true, Control.Absolute, true))
+        put("dev", Rank("dev", "#2e994a #2e9999 #99992e", true, Control.Absolute, true))
         put("owner", Rank("owner", "#d1c113", true, Control.Absolute, true))
         reload()
     }
@@ -53,10 +52,6 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
         return sb.toString()
     }
 
-    fun satisfies(id: Long, rank: Rank): Boolean {
-
-    }
-
     // Rank holds information configured by user of plugin
     class Rank(
         val name: String = "error",
@@ -70,7 +65,12 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
         val quest: Map<String, Any> = mapOf()
     ) {
         @Json(ignored = true)
-        val postfix get() = "[$color]<$name>[]"
+        val postfix: String
+            get() {
+                val s = color.split(" ")
+                return if (s.size == 1) "[$color]<$name>"
+                else Templates.transition("<$name>", *Array(s.size){s[it]})
+            }
         @Json(ignored = true)
         val display get() = if(displayed) postfix else ""
         @Json(ignored = true)

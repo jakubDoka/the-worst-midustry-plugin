@@ -5,6 +5,8 @@ import bundle.Bundle
 import db.Driver
 import kotlin.random.Random
 
+
+
 class Link(val driver: Driver, val discord: Discord, val testing: Boolean = false): Command("link") {
     private val random = Random(Time.millis())
     override fun run(args: Array<String>): Enum<*> {
@@ -14,12 +16,14 @@ class Link(val driver: Driver, val discord: Discord, val testing: Boolean = fals
 
         val id = num(args[0])
 
-        if (!driver.users.exists(id)) {
+        val password = driver.users.get(id, Driver.Users.password)
+
+        if (password == null) {
             send("notFound")
             return Generic.NotFound
         }
 
-        if (driver.users[id].password == Driver.Users.noPassword) {
+        if (password == Driver.Users.noPassword) {
             send("link.noPassword")
             return Result.NoPassword
         }
@@ -27,11 +31,11 @@ class Link(val driver: Driver, val discord: Discord, val testing: Boolean = fals
         send("link.success")
         val code = code()
         if(testing) {
-            discord.verificationQueue[id] = Discord.CodeData(code, "")
+            discord.verificationQueue[id] = Discord.CodeData(code, "fake-snowflake")
             Bundle.send("link.code", code)
         } else {
             discord.verificationQueue[id] = Discord.CodeData(code, message!!.author.get().id.asString())
-            message!!.sendPrivate("link.code", code)
+            sendPrivate("link.code", code)
         }
         return Generic.Success
     }

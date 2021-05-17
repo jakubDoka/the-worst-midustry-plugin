@@ -1,12 +1,15 @@
 package db
 
+import arc.struct.Seq
 import arc.util.Time
 import bundle.Bundle
+import cfg.Reloadable
 import com.beust.klaxon.Klaxon
 import db.Driver.Progress.default
 import db.Driver.Users.default
 import db.Driver.Users.index
 import game.commands.Configure
+import kotlinx.coroutines.runBlocking
 import mindustry.gen.Player
 import mindustry_plugin_utils.Messenger
 import mindustry_plugin_utils.Fs
@@ -20,12 +23,12 @@ import java.io.File
 import java.sql.ResultSet
 
 // Driver handles all database calls and holds information about db structure
-class Driver(override val configPath: String = "config/driver.json", val ranks: Ranks = Ranks(), val testing: Boolean = false): Configure.Reloadable {
+class Driver(override val configPath: String = "config/driver.json", val ranks: Ranks = Ranks(), val testing: Boolean = false): Reloadable {
     lateinit var config: Config
     private lateinit var messenger: Messenger
     private lateinit var con: Database
     private val outlook = Outlook()
-    val users = Manager.UserManager(ranks, outlook, testing)
+    val users = UserManager(ranks, outlook, testing)
 
     // loads the config and opens db connection
     init {
@@ -96,26 +99,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         }
     }
 
-    // Raw USer stores data about user retrieved from database. This data is critical and retrieving
-    // it from database each time would affect performance. Data has to be saved when player disconnects
-    class RawUser(ranks: Ranks, row: ResultRow? = null) {
-        var name = "unknown"
-        var id: Long = -1
-        var rank = Ranks.paralyzed
-        var bundle = Bundle()
-        var uuid: String = ""
-        var stats = Stats()
 
-        init {
-            if (row != null) {
-                name = row[Users.name]
-                id = row[Users.id].value
-                rank = ranks[row[Users.rank]] ?: ranks.default
-                bundle = Bundle(row[Users.locale])
-                stats = Stats(id)
-            }
-        }
-    }
 
     // banned returns whether player is banned on this server
     fun banned(player: Player): Boolean {
@@ -158,16 +142,131 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
     }
 
     // logout disconnects player from his account if there are other matching accounts
-    fun logout(data: RawUser) {
+    fun logout(user: RawUser) {
         transaction {
-            if(users[data.id].password == Users.noPassword) {
-                Users.deleteWhere { Users.id eq data.id }
+            if(user.password == Users.noPassword) {
+                Users.deleteWhere { Users.id eq user.id }
             } else {
-                Users.update({ Users.id eq data.id }){
+                Users.update({ Users.id eq user.id }){
                     it[ip] = "logged.off"
                 }
+                user.save()
             }
+        }
+    }
 
+    class UserManager(val ranks: Ranks, val outlook: Outlook, val testing: Boolean) {
+        fun exists(id: Long): Boolean {
+            return transaction { !Users.select{Users.id eq id}.empty() }
+        }
+
+        // newUser creates user with set and done name, ip address and uuid can be changed,
+        // newly created user is also passed to lookout to localize him and find out a best bundle
+        fun new(player: Player): RawUser {
+            return transaction {
+                val time = Time.millis().toString()
+                val id = Users.insertAndGetId {
+                    it[uuid] = if(testing) time else player.uuid()
+                    it[ip] = player.con.address
+                    it[name] = player.name
+                    it[bornDate] = Time.millis()
+                }.value
+
+                Progress.insert {
+                    it[owner] = id
+                }
+
+                runBlocking {
+                    outlook.input.send(Outlook.Request(player.con.address, id))
+                }
+
+                val u = load(id)
+                if (testing) u.uuid = time
+                u
+            }
+        }
+
+        // loadUser loads a user by id
+        fun load(id: Long): RawUser {
+            return transaction {
+                RawUser(ranks, Users.select { Users.id eq id }.first())
+            }
+        }
+
+        fun search(player: Player): Seq<RawUser> {
+            val res = search(Op.build { Users.uuid.eq(player.uuid()) and Users.ip.eq(player.con.address) } )
+            if(res.size == 0) {
+                return search(Op.build { Users.uuid.eq(player.uuid()) or Users.ip.eq(player.con.address) } )
+            }
+            return res
+        }
+
+        // searchUser
+        private fun search(op: Op<Boolean>): Seq<RawUser> {
+            return transaction {
+                val values = Seq<RawUser>()
+                Users.select { op }.forEach{ values.add(RawUser(ranks, it)) }
+                values
+            }
+        }
+
+        fun save(data: RawUser) {
+            data.stats.save(data.id)
+        }
+
+        fun <T> get(id: Long, c: Column<T>): T? {
+            return transaction {
+                val query = Users.slice(c).select {Users.id eq id}
+                if (query.empty()) null else query.first()[c]
+            }
+        }
+
+        fun <T> set(id: Long, c: Column<T>, value: T) {
+            return transaction {
+                Users.update({ Users.id eq id}) {
+                    it[c] = value
+                }
+            }
+        }
+    }
+
+    // Raw USer stores data about user retrieved from database. This data is critical and retrieving
+    // it from database each time would affect performance. Data has to be saved when player disconnects
+    class RawUser(ranks: Ranks, row: ResultRow? = null) {
+        var id = row?.get(Users.id)?.value ?: -1L
+
+        var name = row?.get(Users.name) ?: "unknown"
+        var uuid = row?.get(Users.uuid) ?: ""
+        var discord = row?.get(Users.discord) ?: Users.noDiscord
+        var password = row?.get(Users.password) ?: Users.noPassword
+
+        var rank = ranks[row?.get(Users.rank)] ?: Ranks.paralyzed
+        var display = ranks[row?.get(Users.display)] ?: rank
+        val specials = HashSet(row?.get(Users.specials)?.split(" ") ?: listOf())
+        val stats = Stats(id)
+        val age = Time.millis() - (row?.get(Users.bornDate) ?: 0)
+
+        val country = row?.get(Users.country) ?: "unknown"
+        val bundle = Bundle(row?.get(Users.locale) ?: "en_US")
+
+        init {
+            if(!specials.contains(display.name)) {
+                display = rank
+            }
+        }
+
+        fun save() {
+            stats.save(id)
+            transaction {
+                Users.update({ Users.id eq this@RawUser.id }) {
+                    it[specials] = this@RawUser.specials.joinTo(StringBuilder(), " ").toString()
+                    it[name] = this@RawUser.name
+                    it[discord] = this@RawUser.discord
+                    it[password] = this@RawUser.password
+                    it[rank] = this@RawUser.rank.name
+                    it[display] = this@RawUser.display.name
+                }
+            }
         }
     }
 
@@ -180,13 +279,13 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
     )
 
     // Users is definition of user table (Exposed framework macro)
-    object Users : LongIdTable(), Quest.ID {
-        val noDiscord = "none"
-        val noPassword = "none"
-        val defaultRank = "newcomer"
-        val noPremium = "none"
-        val defaultCountry = "unknown"
-        val defaultLocale = "en_Us"
+    object Users : LongIdTable() {
+        const val noDiscord = "none"
+        const val noPassword = "none"
+        const val defaultRank = "newcomer"
+        const val noPremium = "none"
+        const val defaultCountry = "unknown"
+        const val defaultLocale = "en_Us"
 
         val name = text("name")
         val uuid = text("uuid").index()
@@ -198,20 +297,10 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         val rank = text("rank").default(defaultRank)
         val specials = text("specials").default("")
         val premium = text("premium").default(noPremium)
+        val display = text("display").default("")
 
         val country = text("country").default(defaultCountry)
         val locale = text("locale").default(defaultLocale)
-        override val idColumn = id
-    }
-
-    class Personal(val id: Long, ranks: Ranks, row: ResultRow = Users.select{Users.id eq id}.first() ) {
-        val name = row[Users.name]
-        val discord = row[Users.discord]
-        val bornDate = row[Users.bornDate].time()
-        val rank = ranks.getOrDefault(row[Users.rank], ranks.default)
-        val specials = row[Users.specials].split(" ").size
-        val premium = ranks[row[Users.premium]]
-        val country = row[Users.country]
     }
 
     // Bas is definition of bans table (Exposed framework macro)
@@ -221,81 +310,95 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
     }
 
     // Progress stored all common stats obtained by playing game casually
-    object Progress: Table(), Quest.ID {
-        val owner = entityId("owner", long("owner"))
+    object Progress: Table() {
+        val owner = long("owner")
         val playTime = long("playTime").default(0)
         val silence = long("silence").default(0)
-        val build = long("built").default(0)
+        val built = long("built").default(0)
         val destroyed = long("destroyed").default(0)
         val killed = long("killed").default(0)
         val deaths = long("deaths").default(0)
         val played = long("played").default(0)
-        val won = long("won").default(0)
+        val wins = long("wins").default(0)
         val messages = long("messages").default(0)
         val commands = long("commands").default(0)
         override val primaryKey = PrimaryKey(owner)
-        override val idColumn = owner
     }
-
-    object Votes: Table() {
-        //TODO(counter for votes)
-    }
-
-
 
     // Stats is ram representation of progress and is used to increase the counter.
     // When player disconnects, new values are saved to database
     class Stats(owner: Long = -1) {
         val joined = Time.millis()
-        val lastMessage = joined
+        var lastMessage = joined
 
-        var buil: Long = 0
-        var dest: Long = 0
-        var kill: Long = 0
-        var deat: Long = 0
-        var play: Long = 0
+        var built: Long = 0
+        var destroyed: Long = 0
+        var killed: Long = 0
+        var deaths: Long = 0
+        var played: Long = 0
         var wins: Long = 0
-        var msgs: Long = 0
-        var cmds: Long = 0
-        var pt: Long = 0
-        var slc: Long = 0
+        var messages: Long = 0
+        var commands: Long = 0
+        var playTime: Long = 0
+        var silence: Long = 0
+
+
 
         init {
             if(owner != -1L) {
                 transaction {
                     val row = Progress.select { Progress.owner eq owner }.first()
-                    buil = row[Progress.build]
-                    dest = row[Progress.destroyed]
-                    kill = row[Progress.killed]
-                    deat = row[Progress.deaths]
-                    play = row[Progress.played]
-                    wins = row[Progress.won]
-                    msgs = row[Progress.messages]
-                    cmds = row[Progress.commands]
-                    pt = row[Progress.playTime]
-                    slc = row[Progress.silence]
+                    built = row[Progress.built]
+                    destroyed = row[Progress.destroyed]
+                    killed = row[Progress.killed]
+                    deaths = row[Progress.deaths]
+                    played = row[Progress.played]
+                    wins = row[Progress.wins]
+                    messages = row[Progress.messages]
+                    commands = row[Progress.commands]
+                    playTime = row[Progress.playTime]
+                    silence = row[Progress.silence]
                 }
             }
         }
 
+        fun points(): Long {
+            return (
+                    built * 5 +
+                            destroyed * 2 +
+                            killed * 2 +
+                            played * 100 +
+                            wins * 1000 +
+                            messages * 50 +
+                            commands * 50 +
+                            playTime / (1000 * 30) +
+                            silence / (1000) // this is just a meme
+
+                    )
+        }
+
         fun save(owner: Long) {
             val duration = Time.millis() - joined
-            val newPlayTime = pt + duration
-            val newSilence = if(lastMessage == joined) slc + duration else Time.millis() - lastMessage
+            val newPlayTime = playTime + duration
+            val newSilence = if(lastMessage == joined) silence + duration else Time.millis() - lastMessage
             transaction {
                 Progress.update({Progress.owner eq owner}) {
-                    it[build] = buil
-                    it[destroyed] = dest
-                    it[killed] = kill
-                    it[deaths] = deat
-                    it[played] = play
-                    it[won] = wins
-                    it[messages] = msgs
-                    it[commands] = cmds
+                    it[built] = this@Stats.built
+                    it[destroyed] = this@Stats.destroyed
+                    it[killed] = this@Stats.killed
+                    it[deaths] = this@Stats.deaths
+                    it[played] = this@Stats.played
+                    it[wins] = this@Stats.wins
+                    it[messages] = this@Stats.messages
+                    it[commands] = this@Stats.commands
                     it[playTime] = newPlayTime
                     it[silence] = newSilence
                 }
             }
+        }
+
+        fun onMessage() {
+            lastMessage = Time.millis()
         }
     }
 }

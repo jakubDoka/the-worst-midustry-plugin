@@ -1,5 +1,6 @@
 import arc.util.CommandHandler
 import cfg.Config
+import cfg.Reloadable
 import com.beust.klaxon.Klaxon
 import db.Driver
 import db.Ranks
@@ -11,12 +12,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mindustry.mod.Plugin
 import mindustry_plugin_utils.Fs
-import mindustry_plugin_utils.Json
 import mindustry_plugin_utils.Logger
 import java.io.File
 
 
-class Main : Plugin(), Configure.Reloadable{
+class Main : Plugin(), Reloadable {
     private val config = Config()
 
     private val root = "config/mods/worst/"
@@ -52,11 +52,12 @@ class Main : Plugin(), Configure.Reloadable{
     init {
         reload()
 
-        discord.reg(Help(game, discord))
+        discord.reg(Help.Discord(discord, game))
         discord.reg(Execute(driver))
         discord.reg(SetRank(driver, users, ranks))
         discord.reg(Link(driver, discord))
         discord.reg(Configure(reloadable))
+        discord.reg(Profile.Discord(driver, ranks, users))
 
         runBlocking {
             GlobalScope.launch {
@@ -74,11 +75,12 @@ class Main : Plugin(), Configure.Reloadable{
 
         game.init(handler)
 
-        game.reg(Help(game, discord))
+        game.reg(Help.Game(game))
         game.reg(Execute(driver))
         game.reg(SetRank(driver, users, ranks))
         game.reg(Account(driver, users, discord, config))
         game.reg(Configure(reloadable))
+        game.reg(Profile.Game(driver, ranks, users))
     }
 
     override fun registerServerCommands(handler: CommandHandler) {
@@ -89,6 +91,7 @@ class Main : Plugin(), Configure.Reloadable{
         terminal.reg(Execute(driver))
         terminal.reg(SetRank(driver, users, ranks))
         terminal.reg(Configure(reloadable))
+        terminal.reg(Profile.Terminal(driver, ranks, users))
     }
 
     private fun bulkRemove(handler: CommandHandler, toRemove: String) {
