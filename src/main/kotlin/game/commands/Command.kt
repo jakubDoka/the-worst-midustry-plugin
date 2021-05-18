@@ -2,7 +2,6 @@ package game.commands
 
 import arc.Core
 import bundle.Bundle
-import discord4j.core.`object`.entity.Message
 import game.u.User
 import java.lang.Long.parseLong
 
@@ -32,12 +31,16 @@ abstract class Command(val name: String): Discord.Sender() {
     }
 
     // checks if string is valid number and notifies user if not
-    fun notNum(s: String, argument: Int): Boolean {
+    fun notNum(argument: Int, vararg s: String, async: Boolean = false): Boolean {
         return try {
-            parseLong(s)
+            parseLong(s[argument])
             false
         } catch (e: Exception) {
-            send("notANumber", argument)
+            if(async) post {
+                send("notANumber", argument + 1)
+            } else {
+                send("notANumber", argument + 1)
+            }
             true
         }
     }

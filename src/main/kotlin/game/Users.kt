@@ -15,8 +15,8 @@ import mindustry.net.NetConnection
 import mindustry_plugin_utils.Logger
 
 // Users keeps needed data about users in ram memory
-class Users(private val driver: Driver, private val logger: Logger, val ranks: Ranks, val config: Config, testing: Boolean = false): HashMap<String, User>() {
-    val quests: Quest.Quests = Quest.Quests(ranks)
+class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val config: Config, testing: Boolean = false): HashMap<String, User>() {
+    val quests: Quest.Quests = Quest.Quests(ranks, driver, testing)
 
     init {
         logger.on(EventType.PlayerConnect::class.java) {
@@ -76,7 +76,7 @@ class Users(private val driver: Driver, private val logger: Logger, val ranks: R
     }
 
     fun reload(target: User) {
-        target.data.save()
+        target.data.save(driver.config.multiplier, ranks)
         load(target.inner)
     }
 

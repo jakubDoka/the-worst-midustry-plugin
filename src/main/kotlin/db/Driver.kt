@@ -4,6 +4,7 @@ import arc.struct.Seq
 import arc.util.Time
 import bundle.Bundle
 import cfg.Reloadable
+import com.beust.klaxon.Json
 import com.beust.klaxon.Klaxon
 import db.Driver.Progress.default
 import db.Driver.Users.default
@@ -21,6 +22,8 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.sql.ResultSet
+import java.util.*
+import kotlin.collections.HashSet
 
 // Driver handles all database calls and holds information about db structure
 class Driver(override val configPath: String = "config/driver.json", val ranks: Ranks = Ranks(), val testing: Boolean = false): Reloadable {
@@ -28,7 +31,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
     private lateinit var messenger: Messenger
     private lateinit var con: Database
     private val outlook = Outlook()
-    val users = UserManager(ranks, outlook, testing)
+    val users = UserManager(ranks, outlook, this, testing)
 
     // loads the config and opens db connection
     init {
@@ -51,8 +54,10 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
             Fs.createDefault(configPath, config)
         }
 
+        messenger.log("Connecting to database...")
         val url = String.format("jdbc:postgresql:%s", config.database)
         con = Database.connect(url, user = config.user, password = config.password)
+        messenger.log("Connected.")
 
         drop()
     }
@@ -61,6 +66,9 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         transaction {
             if(testing) SchemaUtils.drop(Users, Bans, Progress)
             SchemaUtils.create(Users, Bans, Progress)
+            transaction {
+                exec("create index if not exists points on Users (points desc)")
+            }
         }
     }
 
@@ -150,12 +158,12 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
                 Users.update({ Users.id eq user.id }){
                     it[ip] = "logged.off"
                 }
-                user.save()
+                user.save(config.multiplier, ranks)
             }
         }
     }
 
-    class UserManager(val ranks: Ranks, val outlook: Outlook, val testing: Boolean) {
+    class UserManager(val ranks: Ranks, val outlook: Outlook, val driver: Driver, val testing: Boolean) {
         fun exists(id: Long): Boolean {
             return transaction { !Users.select{Users.id eq id}.empty() }
         }
@@ -255,7 +263,19 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
             }
         }
 
-        fun save() {
+        fun points(ranks: Ranks, multiplier: Stats): Long {
+            return stats.points(multiplier) + rankValue(ranks)
+        }
+
+        fun rankValue(ranks: Ranks): Long {
+            var total = 0L
+            for(r in specials) {
+                total += ranks[r]?.value ?: 0
+            }
+            return total
+        }
+
+        fun save(multiplier: Stats, ranks: Ranks) {
             stats.save(id)
             transaction {
                 Users.update({ Users.id eq this@RawUser.id }) {
@@ -265,6 +285,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
                     it[password] = this@RawUser.password
                     it[rank] = this@RawUser.rank.name
                     it[display] = this@RawUser.display.name
+                    it[points] = points(ranks, multiplier)
                 }
             }
         }
@@ -276,6 +297,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         var password: String = "helloThere",
         var database: String = "mtest",
         var verbose: Boolean = false,
+        val multiplier: Stats = Stats(),
     )
 
     // Users is definition of user table (Exposed framework macro)
@@ -301,6 +323,8 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
 
         val country = text("country").default(defaultCountry)
         val locale = text("locale").default(defaultLocale)
+
+        val points = long("points").index().default(0)
     }
 
     // Bas is definition of bans table (Exposed framework macro)
@@ -328,7 +352,9 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
     // Stats is ram representation of progress and is used to increase the counter.
     // When player disconnects, new values are saved to database
     class Stats(owner: Long = -1) {
+        @Json(ignored = true)
         val joined = Time.millis()
+        @Json(ignored = true)
         var lastMessage = joined
 
         var built: Long = 0
@@ -362,18 +388,16 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
             }
         }
 
-        fun points(): Long {
+        fun points(multiplier: Stats): Long {
             return (
-                    built * 5 +
-                            destroyed * 2 +
-                            killed * 2 +
-                            played * 100 +
-                            wins * 1000 +
-                            messages * 50 +
-                            commands * 50 +
-                            playTime / (1000 * 30) +
-                            silence / (1000) // this is just a meme
-
+                    built * multiplier.built +
+                            destroyed * multiplier.destroyed +
+                            killed * multiplier.killed +
+                            played * multiplier.played +
+                            wins * multiplier.wins +
+                            messages * multiplier.messages +
+                            commands * multiplier.commands +
+                            playTime / (multiplier.playTime + 1)
                     )
         }
 

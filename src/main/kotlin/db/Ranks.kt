@@ -2,6 +2,7 @@ package db
 
 import cfg.Reloadable
 import com.beust.klaxon.Json
+import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
 import mindustry_plugin_utils.Fs
 import mindustry_plugin_utils.Messenger
@@ -18,8 +19,10 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
 
     override fun reload() {
         try {
-            val ranks = Klaxon().parse<HashMap<String, Rank>>(File(configPath))!!
-            for ((k, v) in ranks) put(k, v)
+            val ranks = Klaxon().parse<Map<String, JsonObject>>(File(configPath))!!
+            for ((k, v) in ranks) {
+                put(k, Klaxon().parseFromJsonObject(v)!!)
+            }
         } catch (e: Exception) {
             Fs.createDefault(configPath, this)
             messenger.log("failed to load config file: ${e.message}")

@@ -28,10 +28,26 @@ class Main : Plugin(), Reloadable {
 
 
     private val filter = Filter(users, ranks, logger)
+    private val reloadable = HashMap(mapOf(
+        "main" to this,
+        "driver" to driver,
+        "ranks" to ranks
+    ))
 
-    private val discord = Discord(root + "bot/config.json")
     private val game = Handler(users, logger, Command.Kind.Game)
     private val terminal = Handler(users, logger, Command.Kind.Cmd)
+
+    private val discord = Discord(root + "bot/config.json", logger) {
+        it.reg(Help.Discord(it, game))
+        it.reg(Execute(driver))
+        it.reg(SetRank(driver, users, ranks))
+        it.reg(Link(driver, it))
+        it.reg(Configure(reloadable))
+        it.reg(Profile.Discord(driver, ranks, users))
+        it.reg(Search(ranks))
+
+        reloadable["bot"] = it
+    }
 
     override fun reload() {
         config.data = try {
@@ -42,28 +58,12 @@ class Main : Plugin(), Reloadable {
         }
     }
 
-    private val reloadable = mapOf(
-        "main" to this,
-        "bot" to discord,
-        "driver" to driver,
-        "ranks" to ranks
-    )
+
 
     init {
         reload()
 
-        discord.reg(Help.Discord(discord, game))
-        discord.reg(Execute(driver))
-        discord.reg(SetRank(driver, users, ranks))
-        discord.reg(Link(driver, discord))
-        discord.reg(Configure(reloadable))
-        discord.reg(Profile.Discord(driver, ranks, users))
 
-        runBlocking {
-            GlobalScope.launch {
-                discord.handler?.launch()
-            }
-        }
     }
 
     override fun init() {
@@ -81,6 +81,8 @@ class Main : Plugin(), Reloadable {
         game.reg(Account(driver, users, discord, config))
         game.reg(Configure(reloadable))
         game.reg(Profile.Game(driver, ranks, users))
+        game.reg(Search(ranks))
+        game.reg(Minimal.Reload(users))
     }
 
     override fun registerServerCommands(handler: CommandHandler) {
@@ -92,6 +94,7 @@ class Main : Plugin(), Reloadable {
         terminal.reg(SetRank(driver, users, ranks))
         terminal.reg(Configure(reloadable))
         terminal.reg(Profile.Terminal(driver, ranks, users))
+        terminal.reg(Search(ranks))
     }
 
     private fun bulkRemove(handler: CommandHandler, toRemove: String) {

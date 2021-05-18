@@ -5,14 +5,19 @@ import cfg.Reloadable
 import com.beust.klaxon.Klaxon
 import discord4j.core.`object`.entity.Message
 import discord4j.core.spec.EmbedCreateSpec
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import mindustry_plugin_utils.Fs
+import mindustry_plugin_utils.Logger
 import mindustry_plugin_utils.Messenger
 import mindustry_plugin_utils.Templates
 import mindustry_plugin_utils.discord.Handler
 import java.io.File
+import java.lang.RuntimeException
 import java.util.function.Consumer
 
-class Discord(override val configPath: String = "config/discord.json"): Reloadable {
+class Discord(override val configPath: String = "config/discord.json", val logger: Logger, private val register: (Discord) -> Unit = {}): Reloadable {
     var handler: Handler? = null
     lateinit var messenger: Messenger
     lateinit var config: Config
@@ -23,6 +28,10 @@ class Discord(override val configPath: String = "config/discord.json"): Reloadab
     }
 
     override fun reload() {
+        if(handler != null) {
+            handler?.gateway?.logout()?.block()
+        }
+
         try {
             config = Klaxon().parse<Config>(File(configPath))!!
             initMessenger(config.verbose)
@@ -37,15 +46,23 @@ class Discord(override val configPath: String = "config/discord.json"): Reloadab
         }
 
         if(!config.disabled) {
+            messenger.log("Connecting...")
             handler = Handler(config.token, config.prefix)
+            register.invoke(this)
             for((k, v) in config.permissions) {
                 handler?.get(k)?.permissions?.addAll(v)
             }
+            runBlocking {
+                GlobalScope.launch {
+                    handler!!.launch()
+                }
+            }
+            messenger.log("Connected.")
         }
     }
 
     private fun initMessenger(verbose: Boolean) {
-        messenger = Messenger("DatabaseDriver", "enable verbose by adding '\"verbose\": true' to config", verbose)
+        messenger = Messenger("Discord", "enable verbose by adding '\"verbose\": true' to config", verbose)
     }
 
     fun reg(command: Command) {
@@ -55,16 +72,19 @@ class Discord(override val configPath: String = "config/discord.json"): Reloadab
 
         val args = Bundle.translateOr("${command.name}.discord.args", command.args)
         val desc =  Bundle.translateOr("${command.name}.discord.desc", Bundle.translate("${command.name}.desc"))
-        println(args)
-        println(desc)
         command.kind = Command.Kind.Discord
-        handler!!.reg(object: Handler.Cmd(command.name, args, desc){
-            override fun run(message: Message, arguments: List<String>) {
-                command.message = message
-                command.run(Array(arguments.size) {arguments[it]})
-            }
-
-        })
+        try {
+            handler!!.reg(object: Handler.Cmd(command.name, args, desc){
+                override fun run(message: Message, arguments: List<String>) {
+                    logger.run {
+                        command.message = message
+                        command.run(Array(arguments.size) {arguments[it]})
+                    }
+                }
+            })
+        } catch(e: Exception) {
+            RuntimeException("failed to register ${command.name}", e).printStackTrace()
+        }
     }
 
     class CodeData(val code: String = "", val id: String = "")

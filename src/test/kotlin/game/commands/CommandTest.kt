@@ -5,6 +5,8 @@ import cfg.Config
 import db.Driver
 import db.Ranks
 import game.Users
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import mindustry_plugin_utils.Logger
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -16,7 +18,7 @@ class CommandTest {
     private val logger = Logger("config/logger.json")
     private val users = Users(driver, logger, ranks, Config(), testing = true)
     private val handler = Handler(users, logger, Command.Kind.Game)
-    private val discord = Discord()
+    private val discord = Discord(logger = logger)
     private val config = Config()
 
     init {
@@ -26,6 +28,23 @@ class CommandTest {
         handler.reg(SetRank(driver, users, ranks))
         handler.reg(Account(driver, users, discord, config))
         handler.reg(Configure(mapOf()))
+
+        ranks["builder"] = Ranks.Rank(quest = mapOf("built" to 1000L), kind = Ranks.Kind.Special)
+    }
+
+    @Test
+    fun ranks() {
+        val u = users.test()
+
+        u.data.stats.built = 1000
+        users.reload(u)
+        runBlocking { delay(1000) }
+        var found = false
+        users.forEach {
+            if (it.value.data.specials.contains("builder")) found = true
+        }
+        assert(found)
+
     }
 
     @AfterEach
@@ -172,6 +191,7 @@ class CommandTest {
         c.assert(Configure.Result.Result, "bot", "insert", "p", "prefix", "?")
         c.assert(Configure.Result.Result, "bot", "h", "str", "prefix", "!")
         c.assert(Configure.Result.Result, "bot", "remove", "str", "hello.there", "!")
+        c.assert(Configure.Result.Reload, "ranks", "reload")
     }
 
     @Test
@@ -179,7 +199,7 @@ class CommandTest {
         val p = Profile.Game(driver, ranks, users)
         p.user = users.test()
 
-        fun profile(c: Command, doMe: Boolean = true) {
+        fun profile(p: Command, doMe: Boolean = true) {
             p.assert(Command.Generic.NotAInteger, "e", "f")
             p.assert(Command.Generic.NotFound, "2", "f")
             p.assert(Command.Generic.Mismatch, "1", "f")
@@ -204,5 +224,21 @@ class CommandTest {
         profile(d)
 
         profile(Profile.Terminal(driver, ranks, users), false)
+    }
+
+    @Test
+    fun search() {
+        val s = Search(ranks)
+        s.user = users.test()
+        users.test(name = "hl")
+        users.test(name = "cld")
+        users.test(name = "flm")
+        users.test(name = "hlk")
+        s.run(arrayOf("simple", "h 1 1"))
+        s.run(arrayOf("simple", "h"))
+        s.run(arrayOf("simple", "h 1"))
+        s.run(arrayOf("complex", "name = 'cld'"))
+
+        runBlocking { delay(500) }
     }
 }

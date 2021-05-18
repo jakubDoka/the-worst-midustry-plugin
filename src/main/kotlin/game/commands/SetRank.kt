@@ -3,9 +3,6 @@ package game.commands
 import db.Driver
 import db.Ranks
 import game.Users
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
-import java.lang.Long.parseLong
 
 class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): Command("setrank") {
     override fun run(args: Array<String>): Enum<*> {
@@ -14,7 +11,7 @@ class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): C
             return Result.Denied
         }
 
-        if (notNum(args[0], 0)) {
+        if (notNum(0, *args)) {
             return Generic.NotAInteger
         }
 

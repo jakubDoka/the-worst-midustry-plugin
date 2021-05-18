@@ -10,7 +10,7 @@ import kotlin.random.Random
 class Link(val driver: Driver, val discord: Discord, val testing: Boolean = false): Command("link") {
     private val random = Random(Time.millis())
     override fun run(args: Array<String>): Enum<*> {
-        if(notNum(args[0], 0)) {
+        if(notNum(0, *args)) {
             return Generic.NotAInteger
         }
 

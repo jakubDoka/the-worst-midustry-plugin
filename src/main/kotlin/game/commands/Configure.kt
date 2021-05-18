@@ -29,8 +29,8 @@ class Configure(val targets: Map<String, Reloadable>): Command("configure") {
                 return Result.View
             }
             "reload" -> {
-                send("configure.reload")
                 target.reload()
+                send("configure.reload")
                 return Result.Reload
             }
         }

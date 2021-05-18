@@ -14,6 +14,9 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.util.*
+import kotlin.collections.HashMap
+import kotlin.reflect.full.declaredMemberProperties
 
 abstract class Quest(val name: String) {
     companion object {
@@ -35,14 +38,14 @@ abstract class Quest(val name: String) {
         override fun check(user: User, value: Any): String {
             if(value !is Long) return error
             return try {
-                points(value - user.data.stats.javaClass.getField(name).getLong(user.data.stats), user)
+                points(value - user.data.stats::class.declaredMemberProperties.find { it.name == name }!!.getter.call(user.data.stats) as Long, user)
             } catch (e: Exception) {
-                return user.translate("quest.internalError")
+                return user.translate("quest.internalError", e.message ?: "no message")
             }
         }
     }
 
-    class Quests(val ranks: Ranks): HashMap<String, Quest>() {
+    class Quests(val ranks: Ranks, val driver: Driver, val testing: Boolean): HashMap<String, Quest>() {
         val input = Channel<User?>()
 
         fun reg(q: Quest) {
@@ -95,11 +98,16 @@ abstract class Quest(val name: String) {
             reg(object: Quest("rankTotalValue") {
                 override fun check(user: User, value: Any): String {
                     if(value !is Long) return error
-                    var total = 0
-                    for(r in user.data.specials) {
-                        total += ranks[r]?.value ?: 0
-                    }
-                    return points(value - total, user)
+
+                    return points(value - user.data.rankValue(ranks), user)
+                }
+            })
+
+            reg(object: Quest("points") {
+                override fun check(user: User, value: Any): String {
+                    if(value !is Long) return error
+
+                    return points(value - user.data.points(ranks, driver.config.multiplier), user)
                 }
             })
 
@@ -107,20 +115,21 @@ abstract class Quest(val name: String) {
                 GlobalScope.launch {
                     while(true) {
                         val user = input.receive() ?: break
-
                         outer@ for((k, v) in ranks) {
-                            if(v.kind != Ranks.Kind.Special || user.data.specials.contains(k)) continue
+                            if (v.kind != Ranks.Kind.Special || user.data.specials.contains(k)) continue
 
-                            for((q, a) in v.quest) {
+                            for ((q, a) in v.quest) {
                                 val res = get(q)?.check(user, a)
-                                if(res != complete) {
+                                if (res != complete) {
                                     continue@outer
                                 }
                             }
 
-                            Core.app.post {
+                            if (testing) {
                                 user.data.specials.add(k)
-                                user.send("quests.obtained", v.postfix)
+                            } else Core.app.post {
+                                user.data.specials.add(k)
+                                user.send("quest.obtained", v.postfix)
                             }
                         }
                     }

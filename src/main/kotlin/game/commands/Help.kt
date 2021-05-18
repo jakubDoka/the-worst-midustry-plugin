@@ -1,6 +1,5 @@
 package game.commands
 
-import arc.util.CommandHandler
 import bundle.Bundle
 import discord4j.rest.util.Color
 import mindustry_plugin_utils.Templates
@@ -14,7 +13,7 @@ abstract class Help(val commands: Handler): Command("help") {
         override fun run(args: Array<String>): Enum<*> {
             val user = user!!
             val page = if(args.isEmpty()) "1" else args[0]
-            if (!notNum(page, 0)) {
+            if (!notNum(0, page)) {
                 val arr = Array(commands.inner.commandList.size) {
                     val c = commands.inner.commandList[it]
                     "[orange]${c.text}[gray] - ${user.translateOr("${c.text}.args", c.paramText)} - [white]${user.translateOr("${c.text}.desc", c.description)}"

@@ -1,14 +1,11 @@
 package game.commands
 
-import arc.util.Time
 import cfg.Config
 import db.Driver
 import game.Users
 import mindustry_plugin_utils.Templates
 import mindustry_plugin_utils.Templates.time
 import org.apache.commons.codec.digest.DigestUtils
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.regex.Pattern
 
 // Account is game only
@@ -136,7 +133,7 @@ class Account(val driver: Driver, val users: Users, val discord: Discord, val co
 
                 } else if (ensure(args, 3)) {
                     Generic.NotEnough
-                } else if (notNum(args[2], 2)) {
+                } else if (notNum(2, *args)) {
                     Generic.NotAInteger
                 } else {
                     val tid = num(args[2])

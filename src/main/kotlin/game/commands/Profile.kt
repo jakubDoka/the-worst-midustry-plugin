@@ -17,7 +17,7 @@ abstract class Profile(val driver: Driver, val ranks: Ranks, val users: Users): 
             val u = if (args[0] == "me") {
                 user!!.data
             } else {
-                if (notNum(args[0], 0)) {
+                if (notNum(0, *args)) {
                     return Generic.NotAInteger
                 }
                 users.withdraw(num(args[0]))
@@ -47,7 +47,7 @@ abstract class Profile(val driver: Driver, val ranks: Ranks, val users: Users): 
                     user!!.alert(
                         title = user!!.translate("profile.stats.title"),
                         bundleKey = "profile.stats.body",
-                        s.points(),
+                        s.points(driver.config.multiplier) + u.rankValue(ranks),
                         s.built,
                         s.destroyed,
                         s.killed,
@@ -56,7 +56,7 @@ abstract class Profile(val driver: Driver, val ranks: Ranks, val users: Users): 
                         s.wins,
                         s.messages,
                         s.commands,
-                        s.playTime,
+                        s.playTime.time(),
                         s.silence.time()
                     )
                     return Result.Stats
@@ -70,7 +70,7 @@ abstract class Profile(val driver: Driver, val ranks: Ranks, val users: Users): 
 
     class Terminal(driver: Driver, ranks: Ranks, users: Users) : Profile(driver, ranks, users) {
         override fun run(args: Array<String>): Enum<*> {
-            if (notNum(args[0], 0)) {
+            if (notNum(0, *args)) {
                 return Generic.NotAInteger
             }
             val u = users.withdraw(num(args[0]))
@@ -99,12 +99,12 @@ abstract class Profile(val driver: Driver, val ranks: Ranks, val users: Users): 
         override fun run(args: Array<String>): Enum<*> {
             val u = if (args[0] == "me") {
                 transaction {
-                    val id = message!!.author.get().id.asString()
+                    val id = message?.author?.get()?.id?.asString() ?: "fake-snowflake"
                     val query = Driver.Users.slice(Driver.Users.id).select { Driver.Users.discord eq id }
                     if (query.empty()) null else driver.users.load(query.first()[Driver.Users.id].value)
                 }
             } else {
-                if (notNum(args[0], 0)) {
+                if (notNum(0, *args)) {
                     return Generic.NotAInteger
                 }
                 users.withdraw(num(args[0]))
@@ -117,7 +117,6 @@ abstract class Profile(val driver: Driver, val ranks: Ranks, val users: Users): 
 
             when (args[1]) {
                 "personal" -> {
-
                     send {
                         it.setTitle(Bundle.translate("profile.personal.title"))
                         it.setDescription(
@@ -143,7 +142,7 @@ abstract class Profile(val driver: Driver, val ranks: Ranks, val users: Users): 
                         it.setDescription(
                             Bundle.translate(
                                 "profile.stats.discord.body",
-                                s.points(),
+                                s.points(driver.config.multiplier) + u.rankValue(ranks),
                                 s.built,
                                 s.destroyed,
                                 s.killed,
@@ -152,7 +151,7 @@ abstract class Profile(val driver: Driver, val ranks: Ranks, val users: Users): 
                                 s.wins,
                                 s.messages,
                                 s.commands,
-                                s.playTime,
+                                s.playTime.time(),
                                 s.silence.time()
                             )
                         )
