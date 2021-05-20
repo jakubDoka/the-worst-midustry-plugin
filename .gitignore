@@ -127,3 +127,6 @@ gradle-app.setting
 
 ### Gradle Patch ###
 **/build/
+
+password.txt
+config/

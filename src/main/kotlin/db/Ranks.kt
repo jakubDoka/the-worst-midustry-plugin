@@ -11,10 +11,6 @@ import java.io.File
 
 // Ranks holds all game ranks that are used
 class Ranks(override val configPath: String = "config/ranks.json"): HashMap<String, Ranks.Rank>(), Reloadable {
-    companion object {
-        val paralyzed = Rank("paralyzed", "#ff4d00", true, Control.None)
-    }
-
     private val messenger = Messenger("Ranks")
 
     override fun reload() {
@@ -22,6 +18,9 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
             val ranks = Klaxon().parse<Map<String, JsonObject>>(File(configPath))!!
             for ((k, v) in ranks) {
                 put(k, Klaxon().parseFromJsonObject(v)!!)
+            }
+            for((k, v) in this) {
+                v.name = k
             }
         } catch (e: Exception) {
             Fs.createDefault(configPath, this)
@@ -31,19 +30,21 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
 
     // load default ranks
     init {
-        put("griefer", Rank("griefer", "#a10e0e", true, Control.None))
-        put(Driver.Users.defaultRank, Rank(Driver.Users.defaultRank, "#b58e24", false, Control.Minimal))
-        put("verified", Rank("verified", "#248eb5", false, Control.Normal))
-        put("candidate", Rank("candidate", "#830fa3", false, Control.Normal))
-        put("admin", Rank("admin", "#ff6ed3", true, Control.High, true))
-        put("dev", Rank("dev", "#2e994a #2e9999 #99992e", true, Control.Absolute, true))
-        put("owner", Rank("owner", "#d1c113", true, Control.Absolute, true))
+        put("paralyzed", Rank("#ff4d00", true, Control.None))
+        put("griefer", Rank("#a10e0e", true, Control.None))
+        put(Driver.Users.defaultRank, Rank( "#b58e24", false, Control.Minimal))
+        put("verified", Rank( "#248eb5", false, Control.Normal))
+        put("candidate", Rank( "#830fa3", false, Control.Normal))
+        put("admin", Rank( "#ff6ed3", true, Control.High))
+        put("dev", Rank( "#2e994a #2e9999 #99992e", true, Control.Absolute))
+        put("owner", Rank( "#d1c113", true, Control.Absolute))
         reload()
     }
 
     val default get() = get(Driver.Users.defaultRank)!!
     val griefer get() = get("griefer")!!
     val admin get() = get("admin")!!
+    val paralyzed get() = get("paralyzed")!!
 
     // enumerate lists all ranks of specific kind
     fun enumerate(kind: Kind): String {
@@ -57,16 +58,20 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
 
     // Rank holds information configured by user of plugin
     class Rank(
-        val name: String = "error",
         val color: String = "red",
         val displayed: Boolean = true,
         val control: Control = Control.None,
-        val admin: Boolean = false,
         val perms: Set<Perm> = setOf(),
         val value: Int = 0,
         val kind: Kind = Kind.Normal,
-        val quest: Map<String, Any> = mapOf()
+        val quest: Map<String, Any> = mapOf(),
+        val permanent: Boolean = true,
+        val description: Map<String, String> = mapOf()
     ) {
+
+        @Json(ignored = true)
+        var name: String = "error"
+
         @Json(ignored = true)
         val postfix: String
             get() {
@@ -76,8 +81,6 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
             }
         @Json(ignored = true)
         val display get() = if(displayed) postfix else ""
-        @Json(ignored = true)
-        val permanent get() = true
     }
 
     enum class Kind {
@@ -97,8 +100,8 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
 
         val value: Int = Counter.next()
 
-        fun mutable(): Boolean {
-            return this != High && this != Absolute
+        fun admin(): Boolean {
+            return this.value >= High.value
         }
     }
 

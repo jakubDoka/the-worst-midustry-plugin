@@ -2,6 +2,7 @@ package game.commands
 
 import arc.util.CommandHandler
 import cfg.Config
+import cfg.Globals
 import db.Driver
 import db.Ranks
 import game.Users
@@ -13,12 +14,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 
 class CommandTest {
-    private val driver = Driver( testing = true)
+    init { Globals.testing = true }
+    private val driver = Driver()
     private val ranks = Ranks()
     private val logger = Logger("config/logger.json")
-    private val users = Users(driver, logger, ranks, Config(), testing = true)
+    private val users = Users(driver, logger, ranks, Config(), )
     private val handler = Handler(users, logger, Command.Kind.Game)
-    private val discord = Discord(logger = logger)
+    private val discord = Discord(logger = logger, driver = driver)
     private val config = Config()
 
     init {
@@ -26,10 +28,31 @@ class CommandTest {
         handler.reg(Help.Game(handler))
         handler.reg(Execute(driver))
         handler.reg(SetRank(driver, users, ranks))
-        handler.reg(Account(driver, users, discord, config))
+        handler.reg(Account(driver, users, discord, config, ranks))
         handler.reg(Configure(mapOf()))
 
         ranks["builder"] = Ranks.Rank(quest = mapOf("built" to 1000L), kind = Ranks.Kind.Special)
+        ranks["builder"]!!.name = "builder"
+
+        ranks["everything"] = Ranks.Rank(quest = mapOf(
+            "built" to 1000,
+            "destroyed" to 10,
+            "killed" to 100,
+            "deaths" to 10,
+            "played" to 100,
+            "wins" to 10,
+            "messages" to 30,
+            "commands" to 50,
+            "playTime" to 40,
+            "silence" to 80,
+            "age" to 30,
+            "ranks" to "a b c",
+            "rankCount" to 10,
+            "rankTotalValue" to 20,
+            "points" to 40,
+            "roles" to "k f m",
+        ), kind = Ranks.Kind.Special)
+        ranks["everything"]!!.name = "everything"
     }
 
     @Test
@@ -44,7 +67,6 @@ class CommandTest {
             if (it.value.data.specials.contains("builder")) found = true
         }
         assert(found)
-
     }
 
     @AfterEach
@@ -100,7 +122,7 @@ class CommandTest {
 
     @Test
     fun account() {
-        val s = Account(driver, users, discord, config)
+        val s = Account(driver, users, discord, config, ranks)
         s.kind = Command.Kind.Game
         s.user = users.test()
 
@@ -156,14 +178,15 @@ class CommandTest {
 
     @Test
     fun link() {
-        val l = Link(driver, discord, true)
-        l.kind = Command.Kind.Cmd
+        val l = Link(driver, discord)
+        l.kind = Command.Kind.Discord
+
         val user = users.test()
         l.assert(Command.Generic.NotAInteger, "h")
         l.assert(Command.Generic.NotFound, "2")
         l.assert(Link.Result.NoPassword, "1")
 
-        val a = Account(driver, users, discord, Config())
+        val a = Account(driver, users, discord, config, ranks)
         a.user = user
         a.run(arrayOf("password", "hA912345x"))
         a.run(arrayOf("password", "hA912345x"))
@@ -196,8 +219,9 @@ class CommandTest {
 
     @Test
     fun profile() {
-        val p = Profile.Game(driver, ranks, users)
+        val p = Profile(driver, ranks, users)
         p.user = users.test()
+        p.kind = Command.Kind.Game
 
         fun profile(p: Command, doMe: Boolean = true) {
             p.assert(Command.Generic.NotAInteger, "e", "f")
@@ -210,20 +234,22 @@ class CommandTest {
 
         profile(p)
 
-        val a = Account(driver, users, discord, config)
+        val a = Account(driver, users, discord, config, ranks)
         a.user = p.user
         a.assert(Command.Generic.Success, "password", "hA912345")
         a.assert(Command.Generic.Success, "password", "hA912345")
 
-        val l = Link(driver, discord, true)
+        val l = Link(driver, discord)
+        l.kind = Command.Kind.Discord
         l.assert(Command.Generic.Success, "1")
 
         a.assert(Command.Generic.Success, "discord", "hA912345", discord.verificationQueue[1]!!.code)
 
-        val d = Profile.Discord(driver, ranks, users)
-        profile(d)
+        p.kind = Command.Kind.Discord
+        profile(p)
 
-        profile(Profile.Terminal(driver, ranks, users), false)
+        p.kind = Command.Kind.Cmd
+        profile(Profile(driver, ranks, users), false)
     }
 
     @Test
@@ -240,5 +266,27 @@ class CommandTest {
         s.run(arrayOf("complex", "name = 'cld'"))
 
         runBlocking { delay(500) }
+    }
+
+    @Test
+    fun look() {
+        val l = Look(ranks, users)
+        l.user = users.test()
+        l.user!!.data.specials.add("fiction")
+        l.user!!.data.specials.add("builder")
+
+        l.assert(Look.Result.Denied, "rank", "dev")
+        l.assert(Command.Generic.NotFound, "rank", "fiction")
+        l.assert(Command.Generic.Success, "rank", "builder")
+    }
+
+    @Test
+    fun rankInfo() {
+        val l = RankInfo(ranks, users.quests)
+        l.user = users.test()
+
+        l.assert(RankInfo.Result.All, "all")
+        l.assert(Command.Generic.NotFound, "rank", "fiction")
+        l.assert(Command.Generic.Success, "rank", "everything")
     }
 }

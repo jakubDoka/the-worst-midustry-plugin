@@ -3,8 +3,11 @@ package game.commands
 import bundle.Bundle
 import cfg.Reloadable
 import com.beust.klaxon.Klaxon
+import db.Driver
 import discord4j.core.`object`.entity.Message
+import discord4j.core.`object`.entity.User
 import discord4j.core.spec.EmbedCreateSpec
+import game.Users
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -13,11 +16,12 @@ import mindustry_plugin_utils.Logger
 import mindustry_plugin_utils.Messenger
 import mindustry_plugin_utils.Templates
 import mindustry_plugin_utils.discord.Handler
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.lang.RuntimeException
 import java.util.function.Consumer
 
-class Discord(override val configPath: String = "config/discord.json", val logger: Logger, private val register: (Discord) -> Unit = {}): Reloadable {
+class Discord(override val configPath: String = "config/discord.json", val logger: Logger, val driver: Driver, private val register: (Discord) -> Unit = {}): Reloadable {
     var handler: Handler? = null
     lateinit var messenger: Messenger
     lateinit var config: Config
@@ -78,7 +82,9 @@ class Discord(override val configPath: String = "config/discord.json", val logge
                 override fun run(message: Message, arguments: List<String>) {
                     logger.run {
                         command.message = message
+                        command.author = driver.users.load(message.author.get().id.asString())
                         command.run(Array(arguments.size) {arguments[it]})
+                        command.author = null
                     }
                 }
             })
@@ -98,37 +104,6 @@ class Discord(override val configPath: String = "config/discord.json", val logge
             "execute" to listOf("roleName", "otherRoleName")
         ),
     )
-
-    open class Sender {
-        var message: Message? = null
-
-        fun sendDiscord(key: String, vararg args: Any) {
-            plainReply(Bundle.translate(key, *args))
-        }
-
-        fun plainReply(text: String) {
-            if(message == null) println(Templates.cleanColors(text))
-            else message!!.channel.block()?.createMessage(Templates.cleanColors(text))?.block()
-        }
-
-        fun sendPrivate(key: String, vararg args: Any) {
-            sendPrivatePlain(Bundle.translate(key, *args))
-        }
-
-        fun sendPrivatePlain(text: String) {
-            if(message == null) println(text)
-            else message!!.author.get().privateChannel.block()?.createMessage(text)?.block()
-        }
-
-        fun send(embed: Consumer<EmbedCreateSpec>) {
-            if(message == null) {
-                val e = EmbedCreateSpec()
-                embed.accept(e)
-                println(e.asRequest().title().get())
-                println(e.asRequest().description().get())
-            } else message!!.channel.block()?.createEmbed(embed)?.block()
-        }
-    }
 }
 
 

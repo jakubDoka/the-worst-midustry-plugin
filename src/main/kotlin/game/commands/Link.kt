@@ -2,12 +2,13 @@ package game.commands
 
 import arc.util.Time
 import bundle.Bundle
+import cfg.Globals
 import db.Driver
 import kotlin.random.Random
 
 
 
-class Link(val driver: Driver, val discord: Discord, val testing: Boolean = false): Command("link") {
+class Link(val driver: Driver, val discord: Discord): Command("link") {
     private val random = Random(Time.millis())
     override fun run(args: Array<String>): Enum<*> {
         if(notNum(0, *args)) {
@@ -28,15 +29,15 @@ class Link(val driver: Driver, val discord: Discord, val testing: Boolean = fals
             return Result.NoPassword
         }
 
-        send("link.success")
         val code = code()
-        if(testing) {
+        if(Globals.testing) {
             discord.verificationQueue[id] = Discord.CodeData(code, "fake-snowflake")
             Bundle.send("link.code", code)
         } else {
             discord.verificationQueue[id] = Discord.CodeData(code, message!!.author.get().id.asString())
-            sendPrivate("link.code", code)
+            dm.sendPrivate("link.code", code)
         }
+        send("link.success")
         return Generic.Success
     }
 

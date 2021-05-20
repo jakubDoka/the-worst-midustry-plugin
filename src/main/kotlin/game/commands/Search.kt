@@ -73,7 +73,7 @@ class Search(val ranks: Ranks): Command("search") {
                 }
 
                 if(sb.isEmpty()) {
-                    sb.append(user?.translate("search.empty") ?: Bundle.translate("search.empty"))
+                    sb.append(bundle.translate("search.empty"))
                 }
 
                 post {

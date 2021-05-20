@@ -3,6 +3,7 @@ package db
 import arc.struct.Seq
 import arc.util.Time
 import bundle.Bundle
+import cfg.Globals
 import cfg.Reloadable
 import com.beust.klaxon.Json
 import com.beust.klaxon.Klaxon
@@ -26,12 +27,12 @@ import java.util.*
 import kotlin.collections.HashSet
 
 // Driver handles all database calls and holds information about db structure
-class Driver(override val configPath: String = "config/driver.json", val ranks: Ranks = Ranks(), val testing: Boolean = false): Reloadable {
+class Driver(override val configPath: String = "config/driver.json", val ranks: Ranks = Ranks()): Reloadable {
     lateinit var config: Config
     private lateinit var messenger: Messenger
     private lateinit var con: Database
     private val outlook = Outlook()
-    val users = UserManager(ranks, outlook, this, testing)
+    val users = UserManager(ranks, outlook, this)
 
     // loads the config and opens db connection
     init {
@@ -64,7 +65,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
 
     fun drop() {
         transaction {
-            if(testing) SchemaUtils.drop(Users, Bans, Progress)
+            if(Globals.testing) SchemaUtils.drop(Users, Bans, Progress)
             SchemaUtils.create(Users, Bans, Progress)
             transaction {
                 exec("create index if not exists points on Users (points desc)")
@@ -163,7 +164,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         }
     }
 
-    class UserManager(val ranks: Ranks, val outlook: Outlook, val driver: Driver, val testing: Boolean) {
+    class UserManager(val ranks: Ranks, val outlook: Outlook, val driver: Driver) {
         fun exists(id: Long): Boolean {
             return transaction { !Users.select{Users.id eq id}.empty() }
         }
@@ -174,7 +175,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
             return transaction {
                 val time = Time.millis().toString()
                 val id = Users.insertAndGetId {
-                    it[uuid] = if(testing) time else player.uuid()
+                    it[uuid] = if(Globals.testing) time else player.uuid()
                     it[ip] = player.con.address
                     it[name] = player.name
                     it[bornDate] = Time.millis()
@@ -189,7 +190,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
                 }
 
                 val u = load(id)
-                if (testing) u.uuid = time
+                if (Globals.testing) u.uuid = time
                 u
             }
         }
@@ -198,6 +199,14 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         fun load(id: Long): RawUser {
             return transaction {
                 RawUser(ranks, Users.select { Users.id eq id }.first())
+            }
+        }
+
+        // loadUser loads a user by id
+        fun load(id: String): RawUser? {
+            return transaction {
+                val query = Users.select { Users.discord eq id }
+                if (query.empty()) null else RawUser(ranks, query.first())
             }
         }
 
@@ -248,7 +257,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         var discord = row?.get(Users.discord) ?: Users.noDiscord
         var password = row?.get(Users.password) ?: Users.noPassword
 
-        var rank = ranks[row?.get(Users.rank)] ?: Ranks.paralyzed
+        var rank = ranks[row?.get(Users.rank)] ?: ranks.paralyzed
         var display = ranks[row?.get(Users.display)] ?: rank
         val specials = HashSet(row?.get(Users.specials)?.split(" ") ?: listOf())
         val stats = Stats(id)
@@ -289,12 +298,28 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
                 }
             }
         }
+
+        fun owns(rank: String): Boolean {
+            return rank == this.rank.name || specials.contains(rank)
+        }
+
+        fun translateOr(key: String, o: String): String {
+            return bundle.translateOr(key, o)
+        }
+
+        fun translate(key: String, vararg args: Any): String {
+            return bundle.translate(key, *args)
+        }
+
+        fun isSpectator(): Boolean {
+            return rank.control == Ranks.Control.None
+        }
     }
 
     // Config holds database config
     class Config(
         var user: String = "postgres",
-        var password: String = "helloThere",
+        var password: String = "twstest123",
         var database: String = "mtest",
         var verbose: Boolean = false,
         val multiplier: Stats = Stats(),

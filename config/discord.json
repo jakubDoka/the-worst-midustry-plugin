@@ -1,7 +1,0 @@
-{
-  "token": "\"\"",
-  "disabled": "true",
-  "permissions": "{\"execute\": [\"roleName\", \"otherRoleName\"]}",
-  "verbose": "false",
-  "prefix": "?"
-}

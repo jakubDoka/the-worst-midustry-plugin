@@ -3,9 +3,11 @@ package game
 import arc.Core
 import arc.util.Timer
 import cfg.Config
+import cfg.Globals
 import db.Driver
 import db.Quest
 import db.Ranks
+import game.commands.Discord
 import game.u.User
 import kotlinx.coroutines.runBlocking
 import mindustry.game.EventType
@@ -15,8 +17,8 @@ import mindustry.net.NetConnection
 import mindustry_plugin_utils.Logger
 
 // Users keeps needed data about users in ram memory
-class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val config: Config, testing: Boolean = false): HashMap<String, User>() {
-    val quests: Quest.Quests = Quest.Quests(ranks, driver, testing)
+class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val config: Config): HashMap<String, User>() {
+    val quests: Quest.Quests = Quest.Quests(ranks, driver)
 
     init {
         logger.on(EventType.PlayerConnect::class.java) {
@@ -70,7 +72,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
         }
 
         // clean users every now and then
-        if(!testing) Timer.schedule({
+        if(!Globals.testing) Timer.schedule({
             Core.app.post { cleanUp() }
         }, 10f)
     }
@@ -100,7 +102,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
         }
 
         val ru = driver.users.new(p)
-        val u = User(p, ru, true)
+        val u = User(p, ru)
         put(u.data.uuid, u)
 
         return u
@@ -124,12 +126,12 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
                         .append("\n")
                 }
                 val u = User(player, Driver.RawUser(driver.ranks))
-                u.alert(u.translate("paralyzed.title"), "paralyzed.body", sb.toString())
+                u.alert("paralyzed.title", "paralyzed.body", sb.toString())
                 u
             }
         }
 
-        if(!user.idSpectator() && driver.banned(user.inner)) {
+        if(!user.data.isSpectator() && driver.banned(user.inner)) {
             user.data.rank = ranks.griefer
             reload(user)
             return

@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 
 // bundle.Bundle handles simple string loading and also holds custom bundle control
-class Bundle(locale: String = "en_US") {
+class Bundle(val locale: String = "en_US") {
     companion object {
         private const val bundlePath = "TWS.bundle"
         val defaultBundle = Bundle()
@@ -18,21 +18,31 @@ class Bundle(locale: String = "en_US") {
         }
 
         fun translate(key: String, vararg args: Any): String {
-            return String.format(defaultBundle.get(key), *args)
+            return defaultBundle.translate(key, *args)
         }
 
         fun translateOr(s: String, o: String): String {
-            if(defaultBundle.missing(s)) {
-                return o
-            }
-            return defaultBundle.get(s)
+            return defaultBundle.translateOr(s, o)
         }
+
+
     }
 
-    private val bundle: ResourceBundle
+    val bundle: ResourceBundle
 
     init {
         bundle = ResourceBundle.getBundle(bundlePath, Locale(locale), UTF8Control())
+    }
+
+    fun translateOr(s: String, o: String): String {
+        if(missing(s)) {
+            return o
+        }
+        return get(s)
+    }
+
+    fun translate(key: String, vararg args: Any): String {
+        return String.format(get(key), *args)
     }
 
     // get returns key from called bundle or default bundle or returns message that key is missing

@@ -2,6 +2,7 @@ package game.commands
 
 import cfg.Config
 import db.Driver
+import db.Ranks
 import game.Users
 import mindustry_plugin_utils.Templates
 import mindustry_plugin_utils.Templates.time
@@ -9,7 +10,7 @@ import org.apache.commons.codec.digest.DigestUtils
 import java.util.regex.Pattern
 
 // Account is game only
-class Account(val driver: Driver, val users: Users, val discord: Discord, val config: Config): Command("account") {
+class Account(val driver: Driver, val users: Users, val discord: Discord, val config: Config, val ranks: Ranks): Command("account") {
     private val confirmQueue = HashMap<Long, String>()
 
     private val containsNumber = Pattern.compile(".*\\d.*")
@@ -19,7 +20,7 @@ class Account(val driver: Driver, val users: Users, val discord: Discord, val co
     override fun run(args: Array<String>): Enum<*> {
         val user = user!!
         val id = user.data.id
-        if (user.idSpectator() && !user.paralyzed) {
+        if (user.data.rank == ranks.griefer) {
             send("account.denied")
             return Result.Denied
         }

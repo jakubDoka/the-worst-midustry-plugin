@@ -6,7 +6,8 @@ import game.Users
 
 class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): Command("setrank") {
     override fun run(args: Array<String>): Enum<*> {
-        if(kind == Kind.Game && !user!!.data.rank.admin) {
+        println(data!!.rank.name)
+        if(kind == Kind.Game && !data!!.rank.control.admin()) {
             send("setrank.denied")
             return Result.Denied
         }
@@ -30,7 +31,7 @@ class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): C
             return Result.InvalidRank
         }
 
-        if (!rank.control.mutable() && kind != Kind.Cmd && user!!.data.rank.control != Ranks.Control.Absolute) {
+        if (rank.control.admin() && kind == Kind.Game && user!!.data.rank.control != Ranks.Control.Absolute) {
             send( "setrank.notMutable")
             return Result.NotMutable
         }

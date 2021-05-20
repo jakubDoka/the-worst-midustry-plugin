@@ -27,7 +27,7 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
 
         logger.run(EventType.Trigger.update) {
             users.forEach { _, u ->
-                if(u.idSpectator() && u.inner.shooting) {
+                if(u.data.isSpectator() && u.inner.shooting) {
                     u.inner.unit().kill()
                 }
             }
@@ -43,7 +43,7 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
                 return@addActionFilter false
             }
 
-            if(user.data.rank == Ranks.paralyzed) {
+            if(user.data.rank == ranks.paralyzed) {
                 user.send("action.paralyzed")
                 return@addActionFilter false
             }

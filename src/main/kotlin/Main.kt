@@ -37,15 +37,17 @@ class Main : Plugin(), Reloadable {
     private val game = Handler(users, logger, Command.Kind.Game)
     private val terminal = Handler(users, logger, Command.Kind.Cmd)
 
-    private val discord = Discord(root + "bot/config.json", logger) {
+    private val discord = Discord(root + "bot/config.json", logger, driver) {
         it.reg(Help.Discord(it, game))
         it.reg(Execute(driver))
         it.reg(SetRank(driver, users, ranks))
         it.reg(Link(driver, it))
         it.reg(Configure(reloadable))
-        it.reg(Profile.Discord(driver, ranks, users))
+        it.reg(Profile(driver, ranks, users))
         it.reg(Search(ranks))
+        it.reg(RankInfo(ranks, users.quests))
 
+        users.quests.discord = it
         reloadable["bot"] = it
     }
 
@@ -78,11 +80,13 @@ class Main : Plugin(), Reloadable {
         game.reg(Help.Game(game))
         game.reg(Execute(driver))
         game.reg(SetRank(driver, users, ranks))
-        game.reg(Account(driver, users, discord, config))
+        game.reg(Account(driver, users, discord, config, ranks))
         game.reg(Configure(reloadable))
-        game.reg(Profile.Game(driver, ranks, users))
+        game.reg(Profile(driver, ranks, users))
         game.reg(Search(ranks))
         game.reg(Minimal.Reload(users))
+        game.reg(Look(ranks, users))
+        game.reg(RankInfo(ranks, users.quests))
     }
 
     override fun registerServerCommands(handler: CommandHandler) {
@@ -93,8 +97,9 @@ class Main : Plugin(), Reloadable {
         terminal.reg(Execute(driver))
         terminal.reg(SetRank(driver, users, ranks))
         terminal.reg(Configure(reloadable))
-        terminal.reg(Profile.Terminal(driver, ranks, users))
+        terminal.reg(Profile(driver, ranks, users))
         terminal.reg(Search(ranks))
+        terminal.reg(RankInfo(ranks, users.quests))
     }
 
     private fun bulkRemove(handler: CommandHandler, toRemove: String) {
