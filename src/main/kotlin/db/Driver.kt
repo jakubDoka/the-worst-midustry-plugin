@@ -42,7 +42,10 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
 
     override fun reload() {
         if(this::con.isInitialized) {
-            TransactionManager.current().close()
+            transaction {
+                close()
+            }
+
         }
 
         try {

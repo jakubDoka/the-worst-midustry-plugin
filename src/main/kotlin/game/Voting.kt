@@ -84,6 +84,7 @@ class Voting(val users: Users): Displayable {
 
         announce(session)
         queue.add(session)
+        vote(queue.size - 1, session.user.data, true)
     }
 
     fun announce(session: Session) {

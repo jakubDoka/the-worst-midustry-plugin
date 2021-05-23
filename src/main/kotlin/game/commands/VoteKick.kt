@@ -4,6 +4,8 @@ import db.Driver
 import db.Ranks
 import game.Users
 import game.Voting
+import mindustry.gen.Call
+import mindustry_plugin_utils.Templates
 
 class VoteKick(val driver: Driver, val users: Users, val ranks: Ranks, val voting: Voting): Command("votekick") {
     private val kick = Voting.Session.Data(2, 6, "mark", name, Ranks.Perm.VoteKick)
@@ -12,7 +14,7 @@ class VoteKick(val driver: Driver, val users: Users, val ranks: Ranks, val votin
 
     override fun run(args: Array<String>): Enum<*> {
         if(args[0].contains("#")) {
-            args[0] = args[0].substring(args[0].lastIndexOf("#") + 1)
+            args[0] = idFromName(args[0])
         }
 
         if(notNum(0, args)) {
@@ -23,6 +25,14 @@ class VoteKick(val driver: Driver, val users: Users, val ranks: Ranks, val votin
         if(target == null) {
             send("notFound")
             return Generic.NotFound
+        }
+
+        for((i, s) in voting.queue.withIndex()) {
+            if(s.args.size == 3 && s.args[1] is String && num(idFromName(s.args[1] as String)) == target.id) {
+                voting.vote(i, data!!, true)
+                send("vote.success", data!!.voteValue)
+                return Generic.Vote
+            }
         }
 
         if(target.rank.control.admin()) {
@@ -64,6 +74,10 @@ class VoteKick(val driver: Driver, val users: Users, val ranks: Ranks, val votin
         })
         
         return Generic.Vote
+    }
+
+    fun idFromName(name: String): String {
+        return Templates.cleanName(name.substring(name.lastIndexOf("#") + 1))
     }
 
     enum class Result {
