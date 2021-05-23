@@ -18,6 +18,8 @@ class User(val inner: Player, val data: Driver.RawUser) {
         } else {
             inner.name = data.name + data.display.display + "[gray]#" + data.id + "[white]"
             inner.admin = data.rank.control.admin()
+            data.ip = inner.con.address
+            data.uuid = inner.uuid()
         }
     }
 

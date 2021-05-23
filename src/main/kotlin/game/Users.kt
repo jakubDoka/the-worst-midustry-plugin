@@ -1,13 +1,9 @@
 package game
 
-import arc.Core
-import arc.util.Timer
 import cfg.Config
-import cfg.Globals
 import db.Driver
 import db.Quest
 import db.Ranks
-import game.commands.Discord
 import game.u.User
 import kotlinx.coroutines.runBlocking
 import mindustry.game.EventType
@@ -15,6 +11,7 @@ import mindustry.gen.Player
 import mindustry.net.Net
 import mindustry.net.NetConnection
 import mindustry_plugin_utils.Logger
+import mindustry_plugin_utils.Templates
 
 // Users keeps needed data about users in ram memory
 class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val config: Config): HashMap<String, User>() {
@@ -22,6 +19,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
 
     init {
         logger.on(EventType.PlayerConnect::class.java) {
+            it.player.name = Templates.cleanName(it.player.name)
             load(it.player)
         }
 
@@ -70,27 +68,11 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
                 user.data.stats.built++
             }
         }
-
-        // clean users every now and then
-        if(!Globals.testing) Timer.schedule({
-            Core.app.post { cleanUp() }
-        }, 10f)
     }
 
     fun reload(target: User) {
         target.data.save(driver.config.multiplier, ranks)
         load(target.inner)
-    }
-
-    fun find(id: Long): User? {
-        var user: User? = null
-        forEach { _, u ->
-            if(u.data.id == id) {
-                user = u
-                return@forEach
-            }
-        }
-        return user
     }
 
     fun test(ip: String = "127.0.0.1", name: String = "name"): User {
@@ -131,7 +113,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
             }
         }
 
-        if(!user.data.isSpectator() && driver.banned(user.inner)) {
+        if(user.data.rank != ranks.griefer && user.data.banned()) {
             user.data.rank = ranks.griefer
             reload(user)
             return
@@ -146,24 +128,22 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
             return null
         }
 
-        val already = find(id)
+        val already = values.find { it.data.id == id }
         if(already != null) {
             return already.data
         }
 
+        println("oh no")
         return driver.users.load(id)
     }
 
-    private fun cleanUp() {
-        filterValues {
-            if(it.inner.con.hasDisconnected) {
-                driver.users.save(it.data)
-                false
-            } else {
-                true
-            }
-        }
+    fun send(key: String, vararg args: Any) {
+        forEach { _, v -> v.send(key, *args) }
     }
 
-
 }
+
+//TODO FIx hammer.
+//TODO Griefer cannot vote kick
+//TODO Unit changing thing for ranks
+//TODO change newcomer text to white

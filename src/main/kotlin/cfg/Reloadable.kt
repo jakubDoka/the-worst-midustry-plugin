@@ -7,10 +7,11 @@ import java.io.File
 interface Reloadable {
     fun reload()
     val configPath: String
+
     val view get() = try {
         File(configPath).readText()
     } catch (e: Exception) {
-        "unableToOpen"
+        "unsupported"
     }
 
     fun modify(method: String, type: String, path: String, value: String): String {

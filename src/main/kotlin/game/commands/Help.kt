@@ -1,12 +1,13 @@
 package game.commands
 
 import bundle.Bundle
+import db.Ranks
 import discord4j.rest.util.Color
 import mindustry_plugin_utils.Templates
 import java.lang.StringBuilder
 import kotlin.math.sign
 
-abstract class Help(val commands: Handler): Command("help") {
+abstract class Help(val commands: Handler): Command("help", Ranks.Control.None) {
     val pageLen = 7
 
     class Game(handler: Handler): Help(handler) {

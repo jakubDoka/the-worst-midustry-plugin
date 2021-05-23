@@ -6,22 +6,25 @@ import cfg.Globals
 import db.Driver
 import db.Ranks
 import game.Users
+import game.Voting
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import mindustry_plugin_utils.Logger
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertAll
+import java.io.File
 
 class CommandTest {
     init { Globals.testing = true }
+    private val config = Config()
     private val driver = Driver()
     private val ranks = Ranks()
     private val logger = Logger("config/logger.json")
     private val users = Users(driver, logger, ranks, Config(), )
-    private val handler = Handler(users, logger, Command.Kind.Game)
+    private val handler = Handler(users, logger, config, Command.Kind.Game)
     private val discord = Discord(logger = logger, driver = driver)
-    private val config = Config()
+    private val voting = Voting(users)
+
 
     init {
         handler.init(CommandHandler("/"))
@@ -95,7 +98,7 @@ class CommandTest {
 
         c.kind = Command.Kind.Game
         c.user = users.test()
-        c.assert(Execute.Result.Denied, "")
+        c.assert(Command.Generic.Denied, "")
         c.user!!.data.rank = Ranks()["dev"]!!
         c.assert(Command.Generic.Success, "select * from users")
         c.assert(Execute.Result.Failed, "hey db how are you?")
@@ -109,7 +112,7 @@ class CommandTest {
         s.kind = Command.Kind.Game
         s.user = users.test()
 
-        s.assert(SetRank.Result.Denied, "ab", "something")
+        s.assert(Command.Generic.Denied, "ab", "something")
         s.user!!.data.rank = ranks.admin
         s.assert(Command.Generic.NotAInteger, "ab", "something")
         s.assert(Command.Generic.NotFound, "10", "something")
@@ -127,7 +130,7 @@ class CommandTest {
         s.user = users.test()
 
         s.user!!.data.rank = ranks.griefer
-        s.assert(Account.Result.Denied, "password", "h")
+        s.assert(Command.Generic.Denied, "password", "h")
         s.user!!.data.rank = ranks.default
 
         s.assert(Account.Result.Complain, "password", "9")
@@ -140,10 +143,10 @@ class CommandTest {
         s.assert(Command.Generic.Success, "password", "hA912345")
         s.assert(Command.Generic.Success, "password", "hA912345")
 
-        s.assert(Account.Result.Denied, "password", "hA912345x")
+        s.assert(Command.Generic.Denied, "password", "hA912345x")
         s.assert(Command.Generic.Success, "password", "hA912345")
         s.assert(Account.Result.Complain, "password", "h")
-        s.assert(Account.Result.Denied, "password", "hA912345x")
+        s.assert(Command.Generic.Denied, "password", "hA912345x")
         s.assert(Command.Generic.Success, "password", "hA912345")
         s.assert(Command.Generic.Success, "password", "hA912345x")
 
@@ -158,8 +161,8 @@ class CommandTest {
 
         s.assert(Command.Generic.NotEnough, "login", "")
         s.assert(Command.Generic.NotAInteger, "login", "", "")
-        s.assert(Account.Result.Denied, "login", "", "1")
-        s.assert(Account.Result.Denied, "login", "hA912345x", "-4")
+        s.assert(Command.Generic.Denied, "login", "", "1")
+        s.assert(Command.Generic.Denied, "login", "hA912345x", "-4")
         s.assert(Command.Generic.Success, "login", "hA912345x", "1")
         s.user!!.data.id = 1
 
@@ -169,7 +172,7 @@ class CommandTest {
 
         s.assert(Account.Result.None, "discord", "", "")
         discord.verificationQueue[1] = Discord.CodeData("1234", "asd")
-        s.assert(Account.Result.Denied, "discord", "", "")
+        s.assert(Command.Generic.Denied, "discord", "", "")
         s.assert(Account.Result.CodeDenied, "discord", "hA912345x", "")
         s.assert(Account.Result.None, "discord", "", "")
         discord.verificationQueue[1] = Discord.CodeData("1234", "asd")
@@ -203,7 +206,7 @@ class CommandTest {
         ))
         c.user = users.test()
 
-        c.assert(Configure.Result.Denied, "hell")
+        c.assert(Command.Generic.Denied, "hell")
         c.user!!.data.rank = ranks["dev"]!!
         c.assert(Configure.Result.Unknown, "hell")
         c.assert(Configure.Result.View, "bot", "view")
@@ -275,7 +278,7 @@ class CommandTest {
         l.user!!.data.specials.add("fiction")
         l.user!!.data.specials.add("builder")
 
-        l.assert(Look.Result.Denied, "rank", "dev")
+        l.assert(Command.Generic.Denied, "rank", "dev")
         l.assert(Command.Generic.NotFound, "rank", "fiction")
         l.assert(Command.Generic.Success, "rank", "builder")
     }
@@ -288,5 +291,34 @@ class CommandTest {
         l.assert(RankInfo.Result.All, "all")
         l.assert(Command.Generic.NotFound, "rank", "fiction")
         l.assert(Command.Generic.Success, "rank", "everything")
+    }
+
+    @Test
+    fun verificationTest() {
+        assert(File("config/tests").deleteRecursively())
+        val t = VerificationTest("config/tests", ranks, users, config)
+        t.user = users.test()
+
+        t.assert(VerificationTest.Result.Unavailable)
+        t.reload()
+        t.assert(VerificationTest.Result.Initiated)
+        t.assert(VerificationTest.Result.Repeat)
+        t.assert(Command.Generic.NotAInteger, "d")
+        t.assert(VerificationTest.Result.OutOfBounds, "5")
+        t.assert(VerificationTest.Result.OutOfBounds, "0")
+        t.assert(VerificationTest.Result.Incorrect, "2")
+        t.assert(VerificationTest.Result.Fail, "2")
+        t.assert(Command.Generic.Denied)
+        t.penalties.remove(1)
+        t.assert(VerificationTest.Result.Initiated)
+        t.assert(VerificationTest.Result.Correct, "1")
+        t.assert(Command.Generic.Success, "1")
+    }
+
+    @Test
+    fun votekick() {
+        val v = VoteKick(driver, users, ranks, voting)
+        v.user = users.test()
+        v.assert(Command.Generic.NotFound, "hello#10")
     }
 }

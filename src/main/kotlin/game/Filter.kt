@@ -27,7 +27,7 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
 
         logger.run(EventType.Trigger.update) {
             users.forEach { _, u ->
-                if(u.data.isSpectator() && u.inner.shooting) {
+                if(u.data.rank.control.spectator() && u.inner.shooting) {
                     u.inner.unit().kill()
                 }
             }
@@ -64,10 +64,16 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
             return@addActionFilter true
         }
 
-        Vars.netServer.admins.addChatFilter { p, s ->
+        Vars.netServer.admins.addChatFilter { p, message ->
+            var s = message
             val u = users[p.uuid()]!!
 
+            if(!u.data.hasPerm(Ranks.Perm.Scream)) {
+                s = s.toLowerCase()
+            }
+
             val split = u.data.display.color.split(" ")
+
             if(split.size == 1) {
                 return@addChatFilter "[${u.data.display.color}]$s"
             } else {

@@ -10,7 +10,7 @@ import org.apache.commons.codec.digest.DigestUtils
 import java.util.regex.Pattern
 
 // Account is game only
-class Account(val driver: Driver, val users: Users, val discord: Discord, val config: Config, val ranks: Ranks): Command("account") {
+class Account(val driver: Driver, val users: Users, val discord: Discord, val config: Config, val ranks: Ranks): Command("account", Ranks.Control.Paralyzed) {
     private val confirmQueue = HashMap<Long, String>()
 
     private val containsNumber = Pattern.compile(".*\\d.*")
@@ -20,10 +20,6 @@ class Account(val driver: Driver, val users: Users, val discord: Discord, val co
     override fun run(args: Array<String>): Enum<*> {
         val user = user!!
         val id = user.data.id
-        if (user.data.rank == ranks.griefer) {
-            send("account.denied")
-            return Result.Denied
-        }
 
         val password = if (user.paralyzed) "" else user.data.password
         return when (args[0]) {
@@ -62,7 +58,7 @@ class Account(val driver: Driver, val users: Users, val discord: Discord, val co
                     if (complaint == "") {
                         if (password != Driver.Users.noPassword && hash(args[1], id) != password) {
                             send("account.password.denied")
-                            Result.Denied
+                            Generic.Denied
                         } else {
                             send("account.password.confirm")
                             confirmQueue[id] = args[1]
@@ -101,7 +97,7 @@ class Account(val driver: Driver, val users: Users, val discord: Discord, val co
                         Result.None
                     } else if (password != hash(args[1], id)) {
                         send("account.discord.password")
-                        Result.Denied
+                        Generic.Denied
                     } else if (data.code != args[2]) {
                         discord.verificationQueue.remove(id)
                         send("account.discord.code")
@@ -134,14 +130,14 @@ class Account(val driver: Driver, val users: Users, val discord: Discord, val co
 
                 } else if (ensure(args, 3)) {
                     Generic.NotEnough
-                } else if (notNum(2, *args)) {
+                } else if (notNum(2, args)) {
                     Generic.NotAInteger
                 } else {
                     val tid = num(args[2])
                     val p = driver.users.get(tid, Driver.Users.password)
                     if (p != hash(args[1], tid)) {
                         send("account.login.denied")
-                        Result.Denied
+                        Generic.Denied
                     } else {
                         if (!user.paralyzed) {
                             user.inner.name = user.data.name // l 124

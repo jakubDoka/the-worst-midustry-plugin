@@ -30,19 +30,25 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
 
     // load default ranks
     init {
-        put("paralyzed", Rank("#ff4d00", true, Control.None))
-        put("griefer", Rank("#a10e0e", true, Control.None))
-        put(Driver.Users.defaultRank, Rank( "#b58e24", false, Control.Minimal))
+        put("paralyzed", Rank("#ff4d00", true, Control.Paralyzed, 0))
+        put("griefer", Rank("#a10e0e", true, Control.None, 0))
+        put(Driver.Users.defaultRank, Rank( "#fff", false, Control.Minimal))
         put("verified", Rank( "#248eb5", false, Control.Normal))
-        put("candidate", Rank( "#830fa3", false, Control.Normal))
-        put("admin", Rank( "#ff6ed3", true, Control.High))
-        put("dev", Rank( "#2e994a #2e9999 #99992e", true, Control.Absolute))
+        put("candidate", Rank( "#830fa3", true, Control.Normal, 3))
+        put("admin", Rank( "#ff6ed3", true, Control.High, 4))
+        put("dev", Rank(
+            "#faa #afa #aaf",
+            true,
+            Control.Absolute,
+            perms = setOf(Perm.Skip)
+        ))
         put("owner", Rank( "#d1c113", true, Control.Absolute))
         reload()
     }
 
     val default get() = get(Driver.Users.defaultRank)!!
     val griefer get() = get("griefer")!!
+    val verified get() = get("verified")!!
     val admin get() = get("admin")!!
     val paralyzed get() = get("paralyzed")!!
 
@@ -61,6 +67,7 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
         val color: String = "red",
         val displayed: Boolean = true,
         val control: Control = Control.None,
+        val voteValue: Int = 1,
         val perms: Set<Perm> = setOf(),
         val value: Int = 0,
         val kind: Kind = Kind.Normal,
@@ -88,7 +95,7 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
     }
 
     enum class Control {
-        None, Minimal, Normal, High, Absolute;
+        None, Paralyzed, Minimal, Normal, High, Absolute;
 
         object Counter {
             var id: Int = 0
@@ -103,7 +110,13 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
         fun admin(): Boolean {
             return this.value >= High.value
         }
+
+        fun spectator(): Boolean {
+            return this.value <= Paralyzed.value
+        }
     }
 
-    enum class Perm
+    enum class Perm {
+        None, Skip, Scream, VoteKick
+    }
 }

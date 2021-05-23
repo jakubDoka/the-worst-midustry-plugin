@@ -22,6 +22,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
+import java.lang.Integer.max
 import java.sql.ResultSet
 import java.util.*
 import kotlin.collections.HashSet
@@ -108,35 +109,12 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         }
     }
 
-
-
-    // banned returns whether player is banned on this server
-    fun banned(player: Player): Boolean {
-        return transaction { banned(player.uuid()) || banned(player.con.address.subnet()) }
-    }
-
-    // ban bans the player
-    fun ban(player: Player) {
-        transaction {
-            ban(player.uuid())
-            ban(player.con.address.subnet())
+    companion object {
+        // Subnet returns subnet part of ip address
+        fun String.subnet(): String {
+            if (!contains(".")) return ""
+            return substring(0, lastIndexOf('.'))
         }
-    }
-
-    // ban adds ip or uuid to death note
-    fun ban(value: String) {
-        transaction { if(!banned(value)) Bans.insert { it[Bans.value] = value } }
-    }
-
-    // banned returns whether siring is in death note
-    fun banned(value: String): Boolean {
-        return transaction { !Bans.select {Bans.value eq value}.empty() }
-    }
-
-    // Subnet returns subnet part of ip address
-    fun String.subnet(): String {
-        if (!contains(".")) return ""
-        return substring(0, lastIndexOf('.'))
     }
 
     // login logs player into different account
@@ -186,7 +164,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
                 }
 
                 runBlocking {
-                    outlook.input.send(Outlook.Request(player.con.address, id))
+                    outlook.input.send(Outlook.Request(player.con.address, id, player.locale))
                 }
 
                 val u = load(id)
@@ -254,6 +232,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
 
         var name = row?.get(Users.name) ?: "unknown"
         var uuid = row?.get(Users.uuid) ?: ""
+        var ip = row?.get(Users.ip) ?: ""
         var discord = row?.get(Users.discord) ?: Users.noDiscord
         var password = row?.get(Users.password) ?: Users.noPassword
 
@@ -267,7 +246,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         val bundle = Bundle(row?.get(Users.locale) ?: "en_US")
 
         init {
-            if(!specials.contains(display.name)) {
+            if(!specials.contains(display.name) || rank.control.spectator()) {
                 display = rank
             }
         }
@@ -284,6 +263,11 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
             return total
         }
 
+        val voteValue get() = if(rank.control.spectator())
+            rank.voteValue
+        else
+            max(rank.voteValue, display.voteValue)
+
         fun save(multiplier: Stats, ranks: Ranks) {
             stats.save(id)
             transaction {
@@ -295,8 +279,14 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
                     it[rank] = this@RawUser.rank.name
                     it[display] = this@RawUser.display.name
                     it[points] = points(ranks, multiplier)
+                    it[ip] = this@RawUser.ip
+                    it[uuid] = this@RawUser.uuid
                 }
             }
+        }
+
+        fun hasPerm(perm: Ranks.Perm): Boolean {
+            return rank.perms.contains(perm) || display.perms.contains(perm)
         }
 
         fun owns(rank: String): Boolean {
@@ -311,9 +301,38 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
             return bundle.translate(key, *args)
         }
 
-        fun isSpectator(): Boolean {
-            return rank.control == Ranks.Control.None
+        fun idName(): String {
+            return "$name[gray]#$id[]"
         }
+
+        // banned returns whether player is banned on this server
+        fun banned(): Boolean {
+            return transaction { banned(uuid) || banned(ip.subnet()) }
+        }
+
+        // ban bans the player
+        fun ban() {
+            transaction {
+                ban(uuid)
+                ban(ip)
+            }
+        }
+
+        fun unban() {
+            transaction { Bans.deleteWhere {Bans.value.eq(uuid) or Bans.value.eq(ip)} }
+        }
+
+        // ban adds ip or uuid to death note
+        fun ban(value: String) {
+            transaction { if(!banned(value)) Bans.insert { it[Bans.value] = value } }
+        }
+
+        // banned returns whether siring is in death note
+        fun banned(value: String): Boolean {
+            return transaction { !Bans.select {Bans.value eq value}.empty() }
+        }
+
+
     }
 
     // Config holds database config

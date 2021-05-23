@@ -3,6 +3,7 @@ package game.commands
 import arc.Core
 import bundle.Bundle
 import db.Driver
+import db.Ranks
 import discord4j.core.`object`.entity.Message
 import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.core.spec.EmbedCreateSpec
@@ -13,7 +14,7 @@ import java.lang.Long.parseLong
 import java.util.function.Consumer
 
 // Command is a base class for all commands and implements some common utility
-abstract class Command(val name: String) {
+abstract class Command(val name: String, val control: Ranks.Control = Ranks.Control.Minimal) {
     val args = Bundle().get("$name.args")
     var kind: Kind = Kind.Game
 
@@ -28,7 +29,7 @@ abstract class Command(val name: String) {
 
     // short hand for posting to main thread, this is used in bot commands
     fun post(r: () -> Unit) {
-        if(kind != Kind.Discord) r.invoke()
+        if(kind != Kind.Discord) r()
         else Core.app.post(r)
     }
 
@@ -41,10 +42,14 @@ abstract class Command(val name: String) {
         }
     }
 
+    fun notNum(argument: Int, args: Array<String>, async: Boolean = false): Boolean {
+        return notNum(argument, args[argument], async)
+    }
+
     // checks if string is valid number and notifies user if not
-    fun notNum(argument: Int, vararg s: String, async: Boolean = false): Boolean {
+    fun notNum(argument: Int, arg: String, async: Boolean = false): Boolean {
         return try {
-            parseLong(s[argument])
+            parseLong(arg)
             false
         } catch (e: Exception) {
             if(async) post {
@@ -67,6 +72,14 @@ abstract class Command(val name: String) {
         if (res != result) {
             println("got: $res expected: $result")
             assert(false)
+        }
+    }
+
+    fun sendPlain(text: String) {
+        when(kind) {
+            Kind.Discord -> dm.sendPlain(text)
+            Kind.Game -> user!!.sendPlain(text)
+            Kind.Cmd -> println(text)
         }
     }
 
@@ -116,10 +129,10 @@ abstract class Command(val name: String) {
             else channel?.createMessage(Templates.cleanColors(text))?.block()
         }
 
-        fun alert(titleKey: String, bodyKey: String, vararg arguments: Any, color: String = "orange") {
+        fun alert(titleKey: String, bodyKey: String, vararg arguments: Any) {
             send {
                 it.setTitle(translate(titleKey))
-                it.setDescription(translate(bodyKey))
+                it.setDescription(translate(bodyKey, *arguments))
                 it.setColor(Color.CYAN)
             }
         }
@@ -147,6 +160,6 @@ abstract class Command(val name: String) {
     }
 
     enum class Generic {
-        Success, NotAInteger, Mismatch, NotEnough, NotFound, NotSupported
+        Success, NotAInteger, Mismatch, NotEnough, NotFound, NotSupported, Denied, Vote
     }
 }

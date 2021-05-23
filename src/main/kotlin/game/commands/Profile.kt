@@ -16,7 +16,7 @@ class Profile(val driver: Driver, val ranks: Ranks, val users: Users): Command("
         val u = if (args[0] == "me") {
             data
         } else {
-            if (notNum(0, *args)) {
+            if (notNum(0, args)) {
                 return Generic.NotAInteger
             }
             users.withdraw(num(args[0]))

@@ -2,6 +2,7 @@ package game.commands
 
 import arc.util.CommandHandler
 import bundle.Bundle
+import cfg.Config
 import game.Users
 import mindustry.gen.Player
 import mindustry_plugin_utils.Logger
@@ -9,7 +10,7 @@ import java.lang.RuntimeException
 
 
 //handler registers game and terminal commands
-class Handler(val users: Users, val logger: Logger, private val kind: Command.Kind): HashMap<String, Command>() {
+class Handler(val users: Users, val logger: Logger, val config: Config, private val kind: Command.Kind): HashMap<String, Command>() {
     lateinit var inner: CommandHandler
 
     fun init(handler: CommandHandler) {
@@ -29,6 +30,16 @@ class Handler(val users: Users, val logger: Logger, private val kind: Command.Ki
 
                     if (user.paralyzed && command.name != "account" && command.name != "help") {
                         user.send("paralyzed")
+                        return@register
+                    }
+
+                    if(config.data.disabledGameCommands.contains(command.name)) {
+                        user.send("disabled")
+                        return@register
+                    }
+
+                    if(command.control.value > user.data.rank.control.value) {
+                        user.send("tooLowControl", user.data.rank.control, command.control)
                         return@register
                     }
 

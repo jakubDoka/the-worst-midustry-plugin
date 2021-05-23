@@ -6,13 +6,8 @@ import mindustry_plugin_utils.Json
 import mindustry_plugin_utils.Enums
 import java.io.File
 
-class Configure(val targets: Map<String, Reloadable>): Command("configure") {
+class Configure(val targets: Map<String, Reloadable>): Command("configure", Ranks.Control.Absolute) {
     override fun run(args: Array<String>): Enum<*> {
-        if (kind == Kind.Game && user!!.data.rank.control != Ranks.Control.Absolute) {
-            send("configure.denied")
-            return Result.Denied
-        }
-
         val target = targets[args[0]]
         if (target == null) {
             val sb = StringBuilder()

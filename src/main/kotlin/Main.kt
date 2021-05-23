@@ -5,7 +5,9 @@ import com.beust.klaxon.Klaxon
 import db.Driver
 import db.Ranks
 import game.Filter
+import game.Hud
 import game.Users
+import game.Voting
 import game.commands.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -25,6 +27,8 @@ class Main : Plugin(), Reloadable {
     private val ranks = Ranks(root + "ranks/config.json")
     private val driver = Driver(root + "databaseDriver/config.json", ranks)
     private val users = Users(driver, logger, ranks, config)
+    private val voting = Voting(users)
+    private val hud = Hud(users, arrayOf(voting), logger)
 
 
     private val filter = Filter(users, ranks, logger)
@@ -34,8 +38,8 @@ class Main : Plugin(), Reloadable {
         "ranks" to ranks
     ))
 
-    private val game = Handler(users, logger, Command.Kind.Game)
-    private val terminal = Handler(users, logger, Command.Kind.Cmd)
+    private val game = Handler(users, logger, config, Command.Kind.Game)
+    private val terminal = Handler(users, logger, config, Command.Kind.Cmd)
 
     private val discord = Discord(root + "bot/config.json", logger, driver) {
         it.reg(Help.Discord(it, game))
@@ -60,12 +64,8 @@ class Main : Plugin(), Reloadable {
         }
     }
 
-
-
     init {
         reload()
-
-
     }
 
     override fun init() {
@@ -73,7 +73,7 @@ class Main : Plugin(), Reloadable {
     }
 
     override fun registerClientCommands(handler: CommandHandler) {
-        bulkRemove(handler, "help")
+        bulkRemove(handler, "help votekick vote")
 
         game.init(handler)
 
@@ -87,6 +87,12 @@ class Main : Plugin(), Reloadable {
         game.reg(Minimal.Reload(users))
         game.reg(Look(ranks, users))
         game.reg(RankInfo(ranks, users.quests))
+        game.reg(Vote(voting))
+        val test = VerificationTest("$root/tests", ranks, users, config)
+        game.reg(test)
+        game.reg(VoteKick(driver, users, ranks, voting))
+
+        reloadable["test"] = test
     }
 
     override fun registerServerCommands(handler: CommandHandler) {

@@ -11,6 +11,7 @@ import db.Driver.Users
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.util.*
 
 // Outlook handles user localization
 class Outlook() {
@@ -22,7 +23,7 @@ class Outlook() {
             GlobalScope.launch {
                 while (true) {
                     val inp = input.receive() ?: break
-                    val data = localize(inp.ip)
+                    val data = localize(inp.ip, inp.locale)
                     transaction {
                         Users.update({ Users.id eq inp.id }) {
                             it[country] = data.country
@@ -35,7 +36,7 @@ class Outlook() {
     }
 
     // localize tries to get locale by ip address
-    fun localize(ip: String): Data {
+    fun localize(ip: String, default: String): Data {
         return try {
             val text = URL("http://ipapi.co/$ip/json").readText()
             val resp = Klaxon().parse<Response>(text)!!
@@ -47,11 +48,11 @@ class Outlook() {
 
             Data(resp.country_name, locale)
         } catch (e: Exception) {
-            Data(Users.defaultCountry, Users.defaultLocale)
+            Data(Users.defaultCountry, default)
         }
     }
 
     class Data(val country: String, val locale: String)
     class Response(val country_name: String = Users.defaultCountry, val languages: String = Users.defaultLocale)
-    class Request(val ip: String, val id: Long)
+    class Request(val ip: String, val id: Long, val locale: String)
 }

@@ -4,15 +4,9 @@ import db.Driver
 import db.Ranks
 import game.Users
 
-class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): Command("setrank") {
+class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): Command("setrank", Ranks.Control.High) {
     override fun run(args: Array<String>): Enum<*> {
-        println(data!!.rank.name)
-        if(kind == Kind.Game && !data!!.rank.control.admin()) {
-            send("setrank.denied")
-            return Result.Denied
-        }
-
-        if (notNum(0, *args)) {
+        if (notNum(0, args)) {
             return Generic.NotAInteger
         }
 
@@ -39,14 +33,17 @@ class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): C
         val old = other.rank
         other.rank = rank
 
+        if(rank == ranks.griefer) {
+            other.ban()
+        } else {
+            other.unban()
+        }
 
-        post {
-            val target = users[other.uuid]
-            if(target != null) {
-                users.reload(target)
-            } else {
-                driver.users.set(id, Driver.Users.rank, other.rank.name)
-            }
+        val target = users[other.uuid]
+        if(target != null) {
+            users.reload(target)
+        } else {
+            driver.users.set(id, Driver.Users.rank, other.rank.name)
         }
 
         send("setrank.success", other.name, old.postfix, rank.postfix)

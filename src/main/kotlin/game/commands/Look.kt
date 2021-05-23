@@ -10,7 +10,7 @@ class Look(val ranks: Ranks, val users: Users): Command("look") {
             "rank" -> {
                 if (!user!!.data.specials.contains(args[1]) && user!!.data.rank.name != args[1]) {
                     send("look.rank.denied")
-                    Result.Denied
+                    Generic.Denied
                 } else if (!ranks.containsKey(args[1])){
                     send("look.rank.notFound")
                     Generic.NotFound

@@ -25,7 +25,7 @@ class RankInfo(private val ranks: Ranks, private val quests: Quest.Quests): Comm
             }
 
             else -> {
-                val rank = ranks[args[1]]
+                val rank = ranks[args[0]]
                 if (rank == null) {
                     send("ranks.notFound")
                     Generic.NotFound
@@ -63,3 +63,4 @@ class RankInfo(private val ranks: Ranks, private val quests: Quest.Quests): Comm
         All
     }
 }
+

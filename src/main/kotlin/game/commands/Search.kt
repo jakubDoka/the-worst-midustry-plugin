@@ -20,12 +20,9 @@ class Search(val ranks: Ranks): Command("search") {
             GlobalScope.launch {
                 when (args[0]) {
                     "simple" -> {
-                        val unwrapped = ArrayList<String>()
-                        unwrapped.add(args[0])
-                        unwrapped.addAll(args[1].split(" "))
-                        val a = Array(unwrapped.size){unwrapped[it]}
-                        val offset = if (a.size > 2 && !notNum(2, *a, async = true)) num(a[2]) else 0
-                        var limit = if (a.size > 3 && !notNum(3, *a, async = true)) num(a[3]) else 20
+                        val u = args[1].split(" ")
+                        val offset = if (u.size > 1 && !notNum(2, u[1], async = true)) num(u[1]) else 0
+                        var limit = if (u.size > 3 && !notNum(3, u[2], async = true)) num(u[2]) else 20
 
                         when (kind) {
                             Kind.Game -> limit = min(limit, 30)
@@ -34,7 +31,7 @@ class Search(val ranks: Ranks): Command("search") {
                         }
 
                         transaction {
-                            Driver.Users.select { Driver.Users.name.lowerCase() like "${a[1].toLowerCase()}%" }.limit(limit.toInt(), offset = offset).forEach {
+                            Driver.Users.select { Driver.Users.name.lowerCase() like "${u[0].toLowerCase()}%" }.limit(limit.toInt(), offset = offset).forEach {
                                 sb.append(string(it[Driver.Users.id], it[Driver.Users.name], ranks[it[Driver.Users.rank]])).append("\n")
                             }
                         }
