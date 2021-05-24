@@ -474,5 +474,9 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         fun onMessage() {
             lastMessage = Time.millis()
         }
+
+        fun onDeath() {
+            lastDeath = Time.millis()
+        }
     }
 }

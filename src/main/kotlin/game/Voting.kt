@@ -25,7 +25,7 @@ class Voting(val users: Users): Displayable {
     }
 
     override fun display(user: Driver.RawUser): String {
-        val sb = StringBuilder()
+        val sb = StringBuilder(" ")
         for((i, s) in queue.withIndex()) {
             sb.append(String.format(
                 "%s [green]%d[]:[gray]%d[]:[red]%d[] %ds ([green]/vote y ${i + 1}[])",

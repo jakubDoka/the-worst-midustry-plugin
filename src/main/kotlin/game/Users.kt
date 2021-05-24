@@ -34,6 +34,15 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
             }
         }
 
+        logger.on(EventType.UnitChangeEvent::class.java) {
+            val user = get(it.player.uuid())!!
+            if(user.mount != null) {
+                user.mount!!.kill()
+                user.mount = null
+                user.data.stats.lastDeath = Time.millis()
+            }
+        }
+
         logger.on(EventType.GameOverEvent::class.java) {
             forEach { _, u ->
                 if(u.inner.team() == it.winner) {

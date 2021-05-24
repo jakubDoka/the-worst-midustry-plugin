@@ -48,13 +48,6 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
                 return@addActionFilter false
             }
 
-            if(user.mount != null) {
-                if(it.type == ActionType.control) {
-                    user.mount!!.kill()
-                    user.mount = null
-                }
-            }
-
             if(it.tile == null) return@addActionFilter true
 
             if(!map.canInteract(it.tile, user)) {

@@ -9,16 +9,22 @@ class Spawn: Command("spawn") {
         val user = user!!
         when(args[0]) {
             "mount" -> {
-                val left = Time.millis() - user.data.stats.lastDeath
-                if(left < user.data.rank.unitRecharge) {
-                    send("spawn.mount.recharge", left.time())
-                    return Result.Recharge
+
+                var rank = user.data.display
+                val unitType = Globals.unit(user.data.display.unit) ?: run {
+                    rank = user.data.rank
+                    Globals.unit(user.data.rank.unit)
                 }
 
-                val unitType = Globals.unit(user.data.display.unit) ?: Globals.unit(user.data.rank.unit)
                 if(unitType == null) {
                     send("spawn.mount.none")
                     return Result.None
+                }
+
+                val left = user.data.stats.lastDeath - Time.millis() + rank.unitRecharge
+                if(left > 0) {
+                    send("spawn.mount.recharge", left.time())
+                    return Result.Recharge
                 }
 
                 val unit = unitType.create(user.inner.team())

@@ -19,12 +19,13 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
             for ((k, v) in ranks) {
                 put(k, Klaxon().parseFromJsonObject(v)!!)
             }
-            for((k, v) in this) {
-                v.name = k
-            }
         } catch (e: Exception) {
             Fs.createDefault(configPath, this)
             messenger.log("failed to load config file: ${e.message}")
+        }
+
+        for((k, v) in this) {
+            v.name = k
         }
     }
 
