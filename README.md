@@ -24,7 +24,7 @@ name you desire. This same name then has to be put inside `database field in con
 
 Now you should be able to launch server with no errors.
 
-## Feature requests
+## Features
 
 Here you can commit your requests. I may or may not approve them. You can boost your chances by formatting 
 suggestion correctly, so I don't have to do it. (and I will not)
