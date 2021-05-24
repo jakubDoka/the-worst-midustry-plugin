@@ -3,14 +3,18 @@ package game.u
 import cfg.Globals
 import db.Driver
 import db.Ranks
+import game.Users
 import mindustry.gen.Call
 import mindustry.gen.Player
+import mindustry.gen.Unit
 import mindustry_plugin_utils.Templates
 
 class User(val inner: Player, val data: Driver.RawUser) {
     companion object {
         val prefix = "[coral][[[scarlet]Server[]]:[#cbcbcb] "
     }
+
+    var mount: Unit? = null
 
     init {
         if(paralyzed) {
@@ -49,5 +53,10 @@ class User(val inner: Player, val data: Driver.RawUser) {
             println(Templates.cleanColors(plainText))
         else
             inner.sendMessage(plainText)
+    }
+
+    fun disconnect(users: Users) {
+        mount?.kill()
+        users.save(this)
     }
 }

@@ -34,10 +34,10 @@ class Voting(val users: Users): Displayable {
                 required(s),
                 s.no,
                 s.duration
-            ))
+            )).append("\n")
         }
 
-        return sb.toString()
+        return sb.substring(0, sb.length - 1)
     }
 
     private fun required(session: Session): Int {
@@ -71,20 +71,33 @@ class Voting(val users: Users): Displayable {
         return true
     }
 
-    fun add(session: Session) {
+    fun add(session: Session): Enum<*> {
+        if(queue.find{it.user.data.id == session.user.data.id} != null) {
+            session.user.send("voting.already")
+            return SessionSpawnResp.Full
+        }
+
         if (session.user.data.hasPerm(Ranks.Perm.Skip)) {
             session.run()
-            return
+            session.user.send("voting.skip")
+            return SessionSpawnResp.Skip
         }
+
+        var resp = SessionSpawnResp.Success
 
         if(session.user.data.hasPerm(session.data.promoted)) {
             session.duration = 30
             session.permissive = true
+            users.send("voting.special", session.user.data.idName(), session.data.promoted)
+            resp = SessionSpawnResp.Special
         }
 
         announce(session)
         queue.add(session)
         vote(queue.size - 1, session.user.data, true)
+        session.user.send("voting.success")
+
+        return resp
     }
 
     fun announce(session: Session) {
@@ -103,6 +116,10 @@ class Voting(val users: Users): Displayable {
     fun send(session: Session, key: String) {
         users.send(session.key(key), *session.args)
         users.send("voting.announcedBy", session.user.inner.name)
+    }
+
+    enum class SessionSpawnResp {
+        Skip, Special, Full, Success
     }
 
     class Session(val data: Data, val user: User, vararg val args: Any, val run: () -> Unit) {

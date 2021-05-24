@@ -91,6 +91,7 @@ class Main : Plugin(), Reloadable {
         val test = VerificationTest("$root/tests", ranks, users, config)
         game.reg(test)
         game.reg(VoteKick(driver, users, ranks, voting))
+        game.reg(Spawn())
 
         reloadable["test"] = test
     }

@@ -27,7 +27,8 @@ class Hud(val users: Users, private val displayed: Array<Displayable>, logger: L
 
 
         users.forEach { k, u ->
-            if (u.inner.con.hasDisconnected) {
+            if (!u.inner.con.isConnected) {
+                u.disconnect(users)
                 buff.add(k)
                 return@forEach
             }

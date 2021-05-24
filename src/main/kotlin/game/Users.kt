@@ -1,5 +1,6 @@
 package game
 
+import arc.util.Time
 import cfg.Config
 import db.Driver
 import db.Quest
@@ -29,6 +30,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
                 user.data.stats.commands++
             } else {
                 user.data.stats.messages++
+                user.data.stats.onMessage()
             }
         }
 
@@ -45,6 +47,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
             var uuid: String? = null
             if(it.unit.isPlayer) {
                 val user = get(it.unit.player.uuid())!!
+                user.data.stats.lastDeath = Time.millis()
                 user.data.stats.deaths++
                 uuid = user.inner.uuid()
             }
@@ -70,9 +73,15 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
         }
     }
 
+
+
     fun reload(target: User) {
-        target.data.save(driver.config.multiplier, ranks)
+        save(target)
         load(target.inner)
+    }
+
+    fun save(target: User) {
+        target.data.save(driver.config.multiplier, ranks)
     }
 
     fun test(ip: String = "127.0.0.1", name: String = "name"): User {

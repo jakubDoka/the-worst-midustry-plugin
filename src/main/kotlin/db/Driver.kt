@@ -393,6 +393,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         val wins = long("wins").default(0)
         val messages = long("messages").default(0)
         val commands = long("commands").default(0)
+        val lastDeath = long("lastDeath").default(0)
         override val primaryKey = PrimaryKey(owner)
     }
 
@@ -414,8 +415,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         var commands: Long = 0
         var playTime: Long = 0
         var silence: Long = 0
-
-
+        var lastDeath: Long = 0
 
         init {
             if(owner != -1L) {
@@ -431,6 +431,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
                     commands = row[Progress.commands]
                     playTime = row[Progress.playTime]
                     silence = row[Progress.silence]
+                    lastDeath = row[Progress.lastDeath]
                 }
             }
         }
@@ -444,7 +445,8 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
                             wins * multiplier.wins +
                             messages * multiplier.messages +
                             commands * multiplier.commands +
-                            playTime / (multiplier.playTime + 1)
+                            playTime / (multiplier.playTime + 1) +
+                            lastDeath / (multiplier.lastDeath + 1)
                     )
         }
 
@@ -464,6 +466,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
                     it[commands] = this@Stats.commands
                     it[playTime] = newPlayTime
                     it[silence] = newSilence
+                    it[lastDeath] = this@Stats.lastDeath
                 }
             }
         }

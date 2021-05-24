@@ -73,7 +73,9 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
         val kind: Kind = Kind.Normal,
         val quest: Map<String, Any> = mapOf(),
         val permanent: Boolean = true,
-        val description: Map<String, String> = mapOf()
+        val description: Map<String, String> = mapOf(),
+        val unit: String = "",
+        val unitRecharge: Long = 0,
     ) {
 
         @Json(ignored = true)
