@@ -29,10 +29,10 @@ Now you should be able to launch server with no errors.
 Here you can commit your requests. I may or may not approve them. You can boost your chances by formatting 
 suggestion correctly, so I don't have to do it. (and I will not)
 
-- [x] database - server is using postgres database
+- [x] database - plugin is using postgres database
   - [x] user account - every player has his own account and unique identifier
     - [x] password - user have right to maintain multiple accounts if he adds a password to them
-    - [x] a custom name - user can change his name in game by command. Server will remember his name
+    - [x] a custom name - user can change his name in game by command, plugin will remember his name
   - [x] bans - subnet and uuid bans
     - [ ] vpn - vpn detection with some free apy
   - [x] profile - player has his own profile that is viewable
@@ -42,13 +42,13 @@ suggestion correctly, so I don't have to do it. (and I will not)
 - [x] configurations - plugin is highly configurable, all ranks can be defined by the owner of server
   - [x] /configure - gives ability to modify json config file from command like game and discord
     - [x] reloading - configuration can be reloaded while server is running
-- [x] discord bot - server has connected discord bot
+- [x] discord bot - plugin has connected discord bot
   - [ ] live chat - connects discord channel on discord with in-game chat
   - [ ] error log - discord channel for logging errors
   - [ ] rank log - for rank change reports
   - [ ] command log - for command use logging
   - [ ] maps - for map suggestions, downloading and voting  
-  - [x] linking - ability to link your discord account with server account 
+  - [x] linking - ability to link your discord account with plugin account 
 - [x] ranks - way of administration
   - [x] customizable - player can choose witch rank to play with
   - [x] rank info - /ranks is in-game command that can show what ranks you obtained or yor progress towards obtaining them
@@ -67,7 +67,7 @@ suggestion correctly, so I don't have to do it. (and I will not)
   - [x] hud - voting sessions are displayed in hud (message, time, vote state)
   - [x] a permissive vote - if player has permission fitting the command, session is lot easier to pass  
   - [ ] /mute - mutes player for you
-  - [ ] /maps - command can <change|restart|end> the map or display available server maps 
+  - [ ] /maps - command can <change|restart|end> the map or display available maps 
   - [x] votekick - marks player griefer. After mark happens, anyone can kick player without a voting session
     - [x] hammer - hammer also works as votekick command, vanilla version is completely replaced
   - [ ] /kickafk - kicks afk players
