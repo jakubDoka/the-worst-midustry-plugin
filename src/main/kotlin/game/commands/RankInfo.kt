@@ -2,6 +2,7 @@ package game.commands
 
 import db.Quest
 import db.Ranks
+import mindustry_plugin_utils.Templates.time
 
 class RankInfo(private val ranks: Ranks, private val quests: Quest.Quests): Command("ranks") {
     override fun run(args: Array<String>): Enum<*> {
@@ -47,6 +48,8 @@ class RankInfo(private val ranks: Ranks, private val quests: Quest.Quests): Comm
                         rank.perms.joinTo(StringBuilder(), " ").toString(),
                         rank.value,
                         rank.kind,
+                        rank.unit,
+                        rank.unitRecharge.time(),
                         rank.description[bundle.locale]
                             ?: rank.description["default"]
                             ?: bundle.translate("noDescription"),

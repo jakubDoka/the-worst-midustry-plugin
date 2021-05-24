@@ -30,19 +30,77 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
 
     // load default ranks
     init {
-        put("paralyzed", Rank("#ff4d00", true, Control.Paralyzed, 0))
-        put("griefer", Rank("#a10e0e", true, Control.None, 0))
-        put(Driver.Users.defaultRank, Rank( "#fff", false, Control.Minimal))
-        put("verified", Rank( "#248eb5", false, Control.Normal))
-        put("candidate", Rank( "#830fa3", true, Control.Normal, 3))
-        put("admin", Rank( "#ff6ed3", true, Control.High, 4))
+        put("paralyzed", Rank(
+            "#ff4d00",
+            true,
+            Control.Paralyzed,
+            0,
+            description = mapOf(
+                "default" to "If server cannot assign any account to you, you will obtain this rank."
+            )
+        ))
+        put("griefer", Rank(
+            "#a10e0e",
+            true,
+            Control.None,
+            0,
+            description = mapOf(
+                "default" to "For thous who are too stupid to play game normally."
+            )
+        ))
+        put(Driver.Users.defaultRank, Rank(
+            "#ffffff",
+            false,
+            Control.Minimal,
+            description = mapOf(
+                "default" to "Casual rank that you will start with. Its bets to get rid of it verify your self."
+            )
+        ))
+        put("verified", Rank(
+            "#248eb5",
+            false,
+            Control.Normal,
+            description = mapOf(
+                "default" to "For verified members of community. Newcomers cannot interact with your blocks."
+            )
+        ))
+        put("candidate", Rank(
+            "#830fa3",
+            true,
+            Control.Normal,
+            3,
+            description = mapOf(
+                "default" to "Ones closer to god. Candidate's vote has three times as big value in " +
+                        "comparison to other ranks."
+            )
+        ))
+        put("admin", Rank(
+            "#ff6ed3",
+            true,
+            Control.High,
+            4,
+            description = mapOf(
+                "default" to "Usually people who have lot of time to waste it as staff with no payment."
+            )
+        ))
         put("dev", Rank(
             "#faa #afa #aaf",
             true,
             Control.Absolute,
-            perms = setOf(Perm.Skip)
+            perms = setOf(Perm.Skip),
+            description = mapOf(
+                "default" to "Only thous who supported server with least 3000 lines of code can own this" +
+                        " rank. Of course code has to be at least as useful as code there already is."
+            )
         ))
-        put("owner", Rank( "#d1c113", true, Control.Absolute))
+        put("owner", Rank(
+            "#d1c113",
+            true,
+            Control.Absolute,
+            description = mapOf(
+                "default" to "Person who pays all the bills for the server. The most p2w rank there is."
+            )
+        ))
         reload()
     }
 
