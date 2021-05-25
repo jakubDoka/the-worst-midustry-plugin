@@ -76,6 +76,6 @@ suggestion correctly, so I don't have to do it. (and I will not)
 - [ ] /loadout - stores resource for later and adds special ways to spend them
   - [ ] /buildcore - build core from loadout resources
   - [ ] /factory - build units from loadout resources and send them as backup
-  - [ ] boosts - spend loadout resources on special boosts like building speed (not sure if it is possible)
+  - [ ] /boost - spend loadout resources on special boosts like building speed (not sure if it is possible)
     
 
