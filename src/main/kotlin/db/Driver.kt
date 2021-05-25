@@ -7,19 +7,12 @@ import cfg.Globals
 import cfg.Reloadable
 import com.beust.klaxon.Json
 import com.beust.klaxon.Klaxon
-import db.Driver.Progress.default
-import db.Driver.Users.default
-import db.Driver.Users.index
-import game.commands.Configure
 import kotlinx.coroutines.runBlocking
 import mindustry.gen.Player
 import mindustry_plugin_utils.Messenger
 import mindustry_plugin_utils.Fs
-import mindustry_plugin_utils.Templates.time
-import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.lang.Integer.max
@@ -32,7 +25,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
     lateinit var config: Config
     private lateinit var messenger: Messenger
     private lateinit var con: Database
-    private val outlook = Outlook()
+    private val outlook = Lookout()
     val users = UserManager(ranks, outlook, this)
 
     // loads the config and opens db connection
@@ -145,7 +138,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         }
     }
 
-    class UserManager(val ranks: Ranks, val outlook: Outlook, val driver: Driver) {
+    class UserManager(val ranks: Ranks, val outlook: Lookout, val driver: Driver) {
         fun exists(id: Long): Boolean {
             return transaction { !Users.select{Users.id eq id}.empty() }
         }
@@ -167,7 +160,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
                 }
 
                 runBlocking {
-                    outlook.input.send(Outlook.Request(player.con.address, id, player.locale))
+                    outlook.input.send(Lookout.Request(player.con.address, id, player.locale))
                 }
 
                 val u = load(id)

@@ -14,7 +14,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
 // Outlook handles user localization
-class Outlook() {
+class Lookout() {
     val input = Channel<Request?>()
 
     // Spawns an outlook worker

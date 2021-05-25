@@ -1,25 +1,23 @@
 package game.commands
 
+import arc.Core
 import bundle.Bundle
+import cfg.Globals
 import cfg.Reloadable
 import com.beust.klaxon.Klaxon
 import db.Driver
 import discord4j.core.`object`.entity.Message
-import discord4j.core.`object`.entity.User
-import discord4j.core.spec.EmbedCreateSpec
-import game.Users
+import discord4j.core.`object`.entity.channel.GuildChannel
+import discord4j.core.event.domain.message.MessageCreateEvent
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import mindustry.gen.Call
 import mindustry_plugin_utils.Fs
 import mindustry_plugin_utils.Logger
 import mindustry_plugin_utils.Messenger
-import mindustry_plugin_utils.Templates
 import mindustry_plugin_utils.discord.Handler
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
-import java.lang.RuntimeException
-import java.util.function.Consumer
 
 class Discord(override val configPath: String = "config/discord.json", val logger: Logger, val driver: Driver, private val register: (Discord) -> Unit = {}): Reloadable {
     var handler: Handler? = null
@@ -51,11 +49,27 @@ class Discord(override val configPath: String = "config/discord.json", val logge
 
         if(!config.disabled) {
             messenger.log("Connecting...")
-            handler = Handler(config.token, config.prefix)
+            handler = Handler(config.token, config.prefix, commandChannel = config.commandChannel, loadChannels = config.channels)
             register.invoke(this)
             for((k, v) in config.permissions) {
                 handler?.get(k)?.permissions?.addAll(v)
             }
+
+            with("chat") {
+                handler!!.gateway.on(MessageCreateEvent::class.java).subscribe { e ->
+                    if(e.message.channelId.asString() != it.id.asString() && !e.member.get().isBot) {
+                        return@subscribe
+                    }
+
+                    val author = driver.users.load(e.member.get().id.asString())?.idName()
+                        ?: e.member.get().nickname.orElse(e.member.get().username)
+                    val message = Globals.message(author, e.message.content)
+                    Core.app.post {
+                        Call.sendMessage(message)
+                    }
+                }
+            }
+
             runBlocking {
                 GlobalScope.launch {
                     handler!!.launch()
@@ -63,6 +77,11 @@ class Discord(override val configPath: String = "config/discord.json", val logge
             }
             messenger.log("Connected.")
         }
+    }
+
+    fun with(channel: String, run: (GuildChannel) -> Unit) {
+        val ch = handler?.channels?.get(channel)
+        if(ch != null) run(ch)
     }
 
     private fun initMessenger(verbose: Boolean) {
@@ -103,6 +122,14 @@ class Discord(override val configPath: String = "config/discord.json", val logge
         val permissions: Map<String, List<String>> = mapOf(
             "execute" to listOf("roleName", "otherRoleName")
         ),
+        val commandChannel: String = "restrict commands to one channel",
+        val channels: Map<String, String> = mapOf(
+            "chat" to "id of live chat channel here",
+            "commandLog" to "channel for logging commands here",
+            "rankLog" to "rank change logging",
+            "errorLog" to "error logging, can be very spammy",
+            "maps" to "for publishing of maps"
+        )
     )
 }
 

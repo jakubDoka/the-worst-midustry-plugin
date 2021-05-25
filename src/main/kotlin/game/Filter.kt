@@ -1,6 +1,7 @@
 package game
 
 import arc.math.Mathf
+import cfg.Globals
 import db.Ranks
 import game.u.User
 import mindustry.Vars
@@ -12,6 +13,7 @@ import java.lang.Integer.min
 import mindustry.net.Administration.ActionType;
 import mindustry_plugin_utils.Logger
 import mindustry_plugin_utils.Templates
+import mindustry.gen.Call
 
 
 // handles actions and message filtering
@@ -74,11 +76,15 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
 
             val split = u.data.display.color.split(" ")
 
-            if(split.size == 1) {
-                return@addChatFilter "[${u.data.display.color}]$s"
+            val msg = if(split.size == 1) {
+                "[${u.data.display.color}]$s"
             } else {
-                return@addChatFilter Templates.transition(s, *Array(split.size){split[it]}, density = 2)
+                Templates.transition(s, *Array(split.size){split[it]}, density = 2)
             }
+
+            Call.sendMessage(Globals.message(u.data.idName(), msg))
+
+            return@addChatFilter null
         }
     }
 

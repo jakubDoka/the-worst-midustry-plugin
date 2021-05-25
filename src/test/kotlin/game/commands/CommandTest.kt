@@ -16,11 +16,11 @@ import java.io.File
 
 class CommandTest {
     init { Globals.testing = true }
-    private val config = Config()
+    private val config = Config(data = Config.Data(vpnApyKey = "e28a8957c617446da4f8c4297efd80ae"))
     private val driver = Driver()
     private val ranks = Ranks()
     private val logger = Logger("config/logger.json")
-    private val users = Users(driver, logger, ranks, Config(), )
+    private val users = Users(driver, logger, ranks, config)
     private val handler = Handler(users, logger, config, Command.Kind.Game)
     private val discord = Discord(logger = logger, driver = driver)
     private val voting = Voting(users)
@@ -56,6 +56,12 @@ class CommandTest {
             "roles" to "k f m",
         ), kind = Ranks.Kind.Special)
         ranks["everything"]!!.name = "everything"
+    }
+
+    @Test
+    fun vpn() {
+        assert(!users.vpn.authorize("109.230.35.76"))
+        assert(users.vpn.authorize("104.238.96.0"))
     }
 
     @Test

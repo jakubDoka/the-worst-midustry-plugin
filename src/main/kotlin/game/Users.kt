@@ -17,6 +17,7 @@ import mindustry_plugin_utils.Templates
 // Users keeps needed data about users in ram memory
 class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val config: Config): HashMap<String, User>() {
     val quests: Quest.Quests = Quest.Quests(ranks, driver)
+    val vpn = VPN(config, this)
 
     init {
         logger.on(EventType.PlayerConnect::class.java) {
@@ -111,7 +112,11 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
     fun load(player: Player) {
         val existing = driver.users.search(player)
         val user = when (existing.size) {
-            0 -> User(player, driver.users.new(player))
+            0 -> {
+                val u = User(player, driver.users.new(player))
+                runBlocking { vpn.input.send(u) }
+                u
+            }
             1 -> User(player, existing[0])
             else -> {
                 val sb = StringBuffer()

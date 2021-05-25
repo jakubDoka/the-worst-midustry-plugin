@@ -3,7 +3,7 @@ package db
 import org.junit.jupiter.api.Test
 
 class OutlookTest {
-    val outlook = Outlook()
+    val outlook = Lookout()
 
     @Test
     fun get() {

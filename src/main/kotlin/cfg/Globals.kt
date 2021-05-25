@@ -31,4 +31,8 @@ object Globals {
     fun propertyList(target: Class<*>): String {
         return target.declaredFields.joinTo(StringBuilder(), " ") { it.name }.toString()
     }
+
+    fun message(name: String, message: String): String {
+        return String.format("%s [#aaaaaa]>[] %s", name, message)
+    }
 }

@@ -6,5 +6,6 @@ class Config(var data: Data = Data()) {
         var minBuildCost: Float = 60f,
         var testPenalty: Long = 1000 * 60 * 15,
         var disabledGameCommands: Set<String> = setOf(),
+        var vpnApyKey: String = "",
     )
 }

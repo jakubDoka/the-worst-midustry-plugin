@@ -1,17 +1,16 @@
 import arc.util.CommandHandler
 import cfg.Config
+import cfg.Globals
 import cfg.Reloadable
 import com.beust.klaxon.Klaxon
 import db.Driver
 import db.Ranks
-import game.Filter
-import game.Hud
-import game.Users
-import game.Voting
+import game.*
 import game.commands.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import mindustry.game.EventType
 import mindustry.mod.Plugin
 import mindustry_plugin_utils.Fs
 import mindustry_plugin_utils.Logger
@@ -52,7 +51,7 @@ class Main : Plugin(), Reloadable {
         it.reg(RankInfo(ranks, users.quests))
 
         users.quests.discord = it
-        reloadable["bot"] = it
+
     }
 
     override fun reload() {
@@ -66,9 +65,18 @@ class Main : Plugin(), Reloadable {
 
     init {
         reload()
+
+        logger.on(EventType.PlayerChatEvent::class.java) { e ->
+            discord.with("chat") {
+                if(e.message.startsWith("/")) return@with
+                val user = users[e.player.uuid()]!!
+                it.restChannel.createMessage(Globals.message(user.data.idName(), e.message))
+            }
+        }
     }
 
     override fun init() {
+        reloadable["bot"] = discord
         filter.init()
     }
 
@@ -114,3 +122,4 @@ class Main : Plugin(), Reloadable {
     }
 }
 
+// mokMOK123
