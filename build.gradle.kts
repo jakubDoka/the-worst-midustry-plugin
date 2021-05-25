@@ -11,7 +11,7 @@ repositories {
 }
 
 val mindVer = "v126.2"
-val utilsVer = "v0.3.4"
+val utilsVer = "v0.3.7"
 val exposedVer = "0.31.1"
 val junitVersion = "5.6.1"
 val klaxonVer = "5.5"

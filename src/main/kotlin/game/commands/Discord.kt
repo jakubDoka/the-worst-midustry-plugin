@@ -6,9 +6,14 @@ import cfg.Globals
 import cfg.Reloadable
 import com.beust.klaxon.Klaxon
 import db.Driver
+import db.Quest
+import db.Ranks
+import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Message
+import discord4j.core.`object`.entity.User
 import discord4j.core.`object`.entity.channel.GuildChannel
 import discord4j.core.event.domain.message.MessageCreateEvent
+import game.Users
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -16,16 +21,41 @@ import mindustry.gen.Call
 import mindustry_plugin_utils.Fs
 import mindustry_plugin_utils.Logger
 import mindustry_plugin_utils.Messenger
+import mindustry_plugin_utils.Templates
 import mindustry_plugin_utils.discord.Handler
 import java.io.File
 
-class Discord(override val configPath: String = "config/discord.json", val logger: Logger, val driver: Driver, private val register: (Discord) -> Unit = {}): Reloadable {
+class Discord(override val configPath: String = "config/discord.json", val logger: Logger, val driver: Driver, val users: Users, private val register: (Discord) -> Unit = {}): Reloadable {
     var handler: Handler? = null
     lateinit var messenger: Messenger
     lateinit var config: Config
     val verificationQueue = HashMap<Long, CodeData>()
 
     init {
+        users.quests.reg(object: Quest("roles", false) {
+            override fun check(user: Driver.RawUser, value: Any): String {
+                if(user.discord == Driver.Users.noDiscord) return user.translate("quest.roles.none")
+                if(handler == null) return user.translate("quest.roles.inactive")
+                if(value !is String) return user.translate("quest.error")
+
+                val roles = value.split(";")
+
+                val gid = handler!!.gateway.guilds.blockFirst()?.id ?: return user.translate("quest.roles.missingGuild")
+                val u = handler!!.gateway.getMemberById(gid, Snowflake.of(user.discord)).block() ?: return user.translate("quest.roles.invalid")
+
+                val roleSet = u.roles.collectList().block()?.map { it.name }?.toSet() ?: return user.translate("quest.roles.noRoles")
+                val sb = StringBuilder()
+                for(r in roles) {
+                    if(!roleSet.contains(r)) sb.append(r).append(" ")
+                }
+
+                if(sb.isNotEmpty()) {
+                    return user.translate("quest.roles.missing", sb.toString())
+                }
+
+                return complete
+            }
+        })
         reload()
     }
 
@@ -57,10 +87,9 @@ class Discord(override val configPath: String = "config/discord.json", val logge
 
             with("chat") {
                 handler!!.gateway.on(MessageCreateEvent::class.java).subscribe { e ->
-                    if(e.message.channelId.asString() != it.id.asString() && !e.member.get().isBot) {
+                    if(e.message.channelId.asString() != it.id.asString() || e.member.get().isBot) {
                         return@subscribe
                     }
-
                     val author = driver.users.load(e.member.get().id.asString())?.idName()
                         ?: e.member.get().nickname.orElse(e.member.get().username)
                     val message = Globals.message(author, e.message.content)
@@ -75,8 +104,20 @@ class Discord(override val configPath: String = "config/discord.json", val logge
                     handler!!.launch()
                 }
             }
+
             messenger.log("Connected.")
         }
+    }
+
+    fun logRankChange(by: Driver.RawUser?, user: Driver.RawUser, old: Ranks.Rank, new: Ranks.Rank, reason: String = "none") {
+        val args = arrayOf(by?.idName() ?: "unknown", user.idName(), old.postfix, new.postfix, reason)
+        val msg = Templates.cleanColors(Bundle.translate("setrank.success", *args))
+        with("rankLog") {
+            it.restChannel.createMessage(msg).block()
+        }
+
+        users.send("setrank.success", *args)
+        println(msg)
     }
 
     fun with(channel: String, run: (GuildChannel) -> Unit) {

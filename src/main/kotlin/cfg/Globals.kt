@@ -2,6 +2,7 @@ package cfg
 
 import mindustry.content.UnitTypes
 import mindustry.type.UnitType
+import mindustry_plugin_utils.Templates
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
@@ -34,5 +35,9 @@ object Globals {
 
     fun message(name: String, message: String): String {
         return String.format("%s [#aaaaaa]>[] %s", name, message)
+    }
+
+    fun discordMessage(name: String, message: String): String {
+        return Templates.cleanColors(String.format("**%s >** %s", name, message))
     }
 }

@@ -40,18 +40,15 @@ class Main : Plugin(), Reloadable {
     private val game = Handler(users, logger, config, Command.Kind.Game)
     private val terminal = Handler(users, logger, config, Command.Kind.Cmd)
 
-    private val discord = Discord(root + "bot/config.json", logger, driver) {
+    private val discord = Discord(root + "bot/config.json", logger, driver, users) {
         it.reg(Help.Discord(it, game))
         it.reg(Execute(driver))
-        it.reg(SetRank(driver, users, ranks))
+        it.reg(SetRank(driver, users, ranks, it))
         it.reg(Link(driver, it))
         it.reg(Configure(reloadable))
         it.reg(Profile(driver, ranks, users))
         it.reg(Search(ranks))
         it.reg(RankInfo(ranks, users.quests))
-
-        users.quests.discord = it
-
     }
 
     override fun reload() {
@@ -65,12 +62,11 @@ class Main : Plugin(), Reloadable {
 
     init {
         reload()
-
         logger.on(EventType.PlayerChatEvent::class.java) { e ->
             discord.with("chat") {
                 if(e.message.startsWith("/")) return@with
                 val user = users[e.player.uuid()]!!
-                it.restChannel.createMessage(Globals.message(user.data.idName(), e.message))
+                it.restChannel.createMessage(Globals.discordMessage(user.data.idName(), e.message)).block()
             }
         }
     }
@@ -87,7 +83,7 @@ class Main : Plugin(), Reloadable {
 
         game.reg(Help.Game(game))
         game.reg(Execute(driver))
-        game.reg(SetRank(driver, users, ranks))
+        game.reg(SetRank(driver, users, ranks, discord))
         game.reg(Account(driver, users, discord, config, ranks))
         game.reg(Configure(reloadable))
         game.reg(Profile(driver, ranks, users))
@@ -98,7 +94,7 @@ class Main : Plugin(), Reloadable {
         game.reg(Vote(voting))
         val test = VerificationTest("$root/tests", ranks, users, config)
         game.reg(test)
-        game.reg(VoteKick(driver, users, ranks, voting))
+        game.reg(VoteKick(driver, users, ranks, voting, discord))
         game.reg(Spawn())
 
         reloadable["test"] = test
@@ -110,7 +106,7 @@ class Main : Plugin(), Reloadable {
         terminal.init(handler)
 
         terminal.reg(Execute(driver))
-        terminal.reg(SetRank(driver, users, ranks))
+        terminal.reg(SetRank(driver, users, ranks, discord))
         terminal.reg(Configure(reloadable))
         terminal.reg(Profile(driver, ranks, users))
         terminal.reg(Search(ranks))

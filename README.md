@@ -43,9 +43,8 @@ suggestion correctly, so I don't have to do it. (and I will not)
   - [x] /configure - gives ability to modify json config file from command like game and discord
     - [x] reloading - configuration can be reloaded while server is running
 - [x] discord bot - plugin has connected discord bot
-  - [ ] live chat - connects discord channel on discord with in-game chat
-  - [ ] error log - discord channel for logging errors
-  - [ ] rank log - for rank change reports
+  - [x] live chat - connects discord channel on discord with in-game chat
+  - [x] rank log - for rank change reports
   - [ ] command log - for command use logging
   - [ ] maps - for map suggestions, downloading and voting  
   - [x] linking - ability to link your discord account with plugin account 

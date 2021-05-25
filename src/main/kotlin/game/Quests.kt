@@ -63,7 +63,6 @@ abstract class Quest(val name: String, val permanent: Boolean = true) {
     class Quests(val ranks: Ranks, val driver: Driver): HashMap<String, Quest>() {
         val input = Channel<User?>()
         val nonPermanent = HashSet<String>()
-        lateinit var discord: Discord
 
         fun reg(q: Quest) {
             put(q.name, q)
@@ -124,31 +123,6 @@ abstract class Quest(val name: String, val permanent: Boolean = true) {
                 override fun check(user: Driver.RawUser, value: Any): String {
                     val v = long(value) ?: return user.translate("quest.error")
                     return points(v - user.points(ranks, driver.config.multiplier), user)
-                }
-            })
-
-            reg(object: Quest("roles", false) {
-                override fun check(user: Driver.RawUser, value: Any): String {
-                    if(user.discord == Users.noDiscord) return user.translate("quest.roles.none")
-                    if(discord.handler == null) return user.translate("quest.roles.inactive")
-                    if(value !is String) return user.translate("quest.error")
-
-                    val roles = value.split(";")
-
-                    val gid = discord.handler!!.gateway.guilds.blockFirst()?.id ?: return user.translate("quest.roles.missingGuild")
-                    val u = discord.handler!!.gateway.getMemberById(gid, Snowflake.of(user.discord)).block() ?: return user.translate("quest.roles.invalid")
-
-                    val roleSet = u.roles.collectList().block()?.map { it.name }?.toSet() ?: return user.translate("quest.roles.noRoles")
-                    val sb = StringBuilder()
-                    for(r in roles) {
-                        if(!roleSet.contains(r)) sb.append(r).append(" ")
-                    }
-
-                    if(sb.isNotEmpty()) {
-                        return user.translate("quest.roles.missing", sb.toString())
-                    }
-
-                    return complete
                 }
             })
 

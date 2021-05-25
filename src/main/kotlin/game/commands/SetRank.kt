@@ -4,7 +4,7 @@ import db.Driver
 import db.Ranks
 import game.Users
 
-class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): Command("setrank", Ranks.Control.High) {
+class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks, val discord: Discord): Command("setrank", Ranks.Control.High) {
     override fun run(args: Array<String>): Enum<*> {
         if (notNum(0, args)) {
             return Generic.NotAInteger
@@ -46,7 +46,7 @@ class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks): C
             driver.users.set(id, Driver.Users.rank, other.rank.name)
         }
 
-        send("setrank.success", other.name, old.postfix, rank.postfix)
+        discord.logRankChange(data, other, old, rank, if(args.size > 2) args[2] else "none")
 
         return Generic.Success
     }

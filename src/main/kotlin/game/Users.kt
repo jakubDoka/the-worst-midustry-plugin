@@ -156,7 +156,6 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
             return already.data
         }
 
-        println("oh no")
         return driver.users.load(id)
     }
 

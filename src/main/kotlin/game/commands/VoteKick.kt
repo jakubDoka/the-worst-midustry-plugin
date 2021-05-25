@@ -7,7 +7,7 @@ import game.Voting
 import mindustry.gen.Call
 import mindustry_plugin_utils.Templates
 
-class VoteKick(val driver: Driver, val users: Users, val ranks: Ranks, val voting: Voting): Command("votekick") {
+class VoteKick(val driver: Driver, val users: Users, val ranks: Ranks, val voting: Voting, val discord: Discord): Command("votekick") {
     private val kick = Voting.Session.Data(2, 6, "mark", name, Ranks.Perm.VoteKick)
 
     private val sessions = HashMap<Long, Voting.Session>()
@@ -63,7 +63,10 @@ class VoteKick(val driver: Driver, val users: Users, val ranks: Ranks, val votin
             desc = args[1]
         }
 
-        voting.add(Voting.Session(kick, user!!, data!!.idName(), target.idName(), desc) {
+        val data = data!!
+        voting.add(Voting.Session(kick, user!!, data.idName(), target.idName(), desc) {
+            discord.logRankChange(data, target, target.rank, ranks.griefer, desc)
+
             target.rank = ranks.griefer
             target.ban()
             val online = users[target.uuid]
