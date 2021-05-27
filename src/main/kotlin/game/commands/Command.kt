@@ -115,18 +115,18 @@ abstract class Command(val name: String, val control: Ranks.Control = Ranks.Cont
             send(command.message!!.channel.block(), text)
         }
 
-        fun sendPrivate(key: String, vararg args: Any) {
-            sendPrivatePlain(translate(key, *args))
+        fun sendPrivate(key: String, vararg args: Any): Boolean {
+            return sendPrivatePlain(translate(key, *args))
         }
 
-        fun sendPrivatePlain(text: String) {
-
-            send(command.message!!.author.get().privateChannel.block(), text)
+        fun sendPrivatePlain(text: String): Boolean {
+            return send(command.message!!.author.get().privateChannel.block(), text)
         }
 
-        fun send(channel: MessageChannel?, text: String) {
+        fun send(channel: MessageChannel?, text: String): Boolean {
             if(command.message == null) Templates.cleanColors(text)
-            else channel?.createMessage(Templates.cleanColors(text))?.block()
+            else channel?.createMessage(Templates.cleanColors(text))?.block() ?: return false
+            return true
         }
 
         fun alert(titleKey: String, bodyKey: String, vararg arguments: Any) {

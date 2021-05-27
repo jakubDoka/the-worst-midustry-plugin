@@ -4,11 +4,13 @@ import arc.util.Time
 import bundle.Bundle
 import cfg.Globals
 import db.Driver
+import discord4j.core.`object`.entity.User
 import kotlin.random.Random
 
 
 
-class Link(val driver: Driver, val discord: Discord): Command("link") {
+class
+Link(val driver: Driver, val discord: Discord): Command("link") {
     private val random = Random(Time.millis())
     override fun run(args: Array<String>): Enum<*> {
         if(notNum(0, args)) {
@@ -35,7 +37,14 @@ class Link(val driver: Driver, val discord: Discord): Command("link") {
             Bundle.send("link.code", code)
         } else {
             discord.verificationQueue[id] = Discord.CodeData(code, message!!.author.get().id.asString())
-            dm.sendPrivate("link.code", code)
+            try {
+                send("link.failedDm")
+                dm.sendPrivate("link.code", code)
+                send("link.failedDm")
+            } catch (e: Exception) {
+                send("link.failedDm")
+                return Result.SendFailed
+            }
         }
         send("link.success")
         return Generic.Success
@@ -46,6 +55,6 @@ class Link(val driver: Driver, val discord: Discord): Command("link") {
     }
 
     enum class Result {
-        NoPassword
+        NoPassword, SendFailed
     }
 }

@@ -74,15 +74,7 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
                 s = s.toLowerCase()
             }
 
-            val split = u.data.display.color.split(" ")
-
-            val msg = if(split.size == 1) {
-                "[${u.data.display.color}]$s"
-            } else {
-                Templates.transition(s, *Array(split.size){split[it]}, density = 2)
-            }
-
-            Call.sendMessage(Globals.message(u.data.idName(), msg))
+            Call.sendMessage(Globals.message(u.data.idName(), u.data.colorMessage(s)))
 
             return@addChatFilter null
         }

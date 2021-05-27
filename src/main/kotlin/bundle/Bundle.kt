@@ -52,7 +52,7 @@ class Bundle(val locale: String = "en_US") {
         else if (defaultBundle.bundle.containsKey(key))
             defaultBundle.bundle.getString(key)
         else
-            "bundle key $key is missing, so be quiet"
+            "bundle key $key is missing, please bother the developer"
 
 
         return v.replace("[o]", "[orange]").replace("[r]", "[red]").replace("[g]", "[green]")

@@ -90,9 +90,10 @@ class Discord(override val configPath: String = "config/discord.json", val logge
                     if(e.message.channelId.asString() != it.id.asString() || e.member.get().isBot) {
                         return@subscribe
                     }
-                    val author = driver.users.load(e.member.get().id.asString())?.idName()
-                        ?: e.member.get().nickname.orElse(e.member.get().username)
-                    val message = Globals.message(author, e.message.content)
+                    val user = driver.users.load(e.member.get().id.asString())
+                    val name = user?.idName() ?: e.member.get().nickname.orElse(e.member.get().username)
+                    val content = user?.colorMessage(e.message.content) ?: e.message.content
+                    val message = Globals.message(name, content)
                     Core.app.post {
                         Call.sendMessage(message)
                     }

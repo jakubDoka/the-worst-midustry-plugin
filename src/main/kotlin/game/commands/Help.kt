@@ -42,13 +42,20 @@ abstract class Help(val commands: Handler): Command("help", Ranks.Control.None) 
                 discord.handler!!.forEach { (k, v) ->
                     sb
                         .append("**")
+                        .append(discord.config.prefix)
                         .append(k)
                         .append("**")
-                        .append(" - *")
-                        .append(v.args)
-                        .append("* - ")
-                        .append(v.description).
-                        append("\n")
+                    if (v.args.replace("\\s*", "") != "")
+                        sb
+                            .append(" - *")
+                            .append(v.args)
+                            .append("* - ")
+                    else
+                        sb.append(" - ")
+
+                    sb
+                        .append(v.description)
+                        .append("\n")
                 }
                 alert("help.discord.title", "placeholder", sb.toString())
                 return Generic.Success

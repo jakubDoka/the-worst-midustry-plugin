@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import mindustry.gen.Player
 import mindustry_plugin_utils.Messenger
 import mindustry_plugin_utils.Fs
+import mindustry_plugin_utils.Templates
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -328,7 +329,13 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
             return transaction { !Bans.select {Bans.value eq value}.empty() }
         }
 
-
+        fun colorMessage(message: String): String {
+            val colors = display.color.split(" ")
+            return if(colors.size > 1)
+                Templates.transition(message, *Array(colors.size){colors[it]}, density = 2)
+            else
+                "[${colors[0]}]${message}"
+        }
     }
 
     // Config holds database config
