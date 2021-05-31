@@ -2,11 +2,17 @@ package game
 
 import arc.math.Mathf
 import cfg.Globals
+import arc.graphics.Color
 import db.Ranks
 import game.u.User
 import mindustry.Vars
+import mindustry.ai.formations.patterns.CircleFormation
+import mindustry.ai.types.FormationAI
+import mindustry.content.Fx
 import mindustry.game.EventType
 import mindustry.net.Administration
+import mindustry.gen.Commanderc
+import mindustry.gen.Unit
 import mindustry.world.Tile
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -48,6 +54,23 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
             if(user.data.rank == ranks.paralyzed) {
                 user.send("action.paralyzed")
                 return@addActionFilter false
+            }
+
+            if(it.type == ActionType.command) {
+                val commander = it.player.unit()
+                if(commander is Commanderc) {
+
+                    // replace the command function
+                    if (commander.isCommanding) {
+                        commander.clearCommand()
+                    } else if (commander.type.commandLimit > 0) {
+                        commander.commandNearby(CircleFormation()) {
+                            unit: Unit -> unit.controller() !is FormationAI
+                        }
+                        Call.effect(Fx.commandSend, commander.x, commander.y, 0f, Color.white)
+                    }
+                    return@addActionFilter false
+                }
             }
 
             if(it.tile == null) return@addActionFilter true
