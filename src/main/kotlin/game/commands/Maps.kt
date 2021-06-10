@@ -22,7 +22,7 @@ class Maps(val config: Config, private val voting: Voting, val driver: Driver): 
     private val end = Voting.Session.Data(1, 7, "end", "maps", Ranks.Perm.Maps)
 
     override fun run(args: Array<String>): Enum<*> {
-        if("change restart end".contains(args[0]) && kind == Kind.Discord) {
+        if("change restart end".contains(args[0]) && kind != Kind.Game) {
             send("maps.notSupported")
             return Generic.NotSupported
         }
