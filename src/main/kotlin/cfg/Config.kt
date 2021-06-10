@@ -1,5 +1,7 @@
 package cfg
 
+import mindustry.game.Gamemode
+
 class Config(var data: Data = Data()) {
     class Data(
         var maturity: Long = 1000 * 60 * 60 * 5,
@@ -7,5 +9,6 @@ class Config(var data: Data = Data()) {
         var testPenalty: Long = 1000 * 60 * 15,
         var disabledGameCommands: Set<String> = setOf(),
         var vpnApyKey: String = "",
+        var gamemode: Gamemode = Gamemode.survival
     )
 }

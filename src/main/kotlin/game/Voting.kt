@@ -2,6 +2,8 @@ package game
 
 import arc.math.Mathf
 import arc.struct.Seq
+import bundle.Bundle
+import cfg.Globals
 import db.Driver
 import db.Ranks
 import game.u.User
@@ -72,6 +74,13 @@ class Voting(val users: Users): Displayable {
     }
 
     fun add(session: Session): Enum<*> {
+        if(Globals.testing) {
+            announce(session)
+            execute(session)
+            stop(session)
+            return SessionSpawnResp.Success
+        }
+
         if(queue.find{it.user.data.id == session.user.data.id} != null) {
             session.user.send("voting.already")
             return SessionSpawnResp.Full
@@ -101,11 +110,12 @@ class Voting(val users: Users): Displayable {
     }
 
     fun announce(session: Session) {
-        send(session, "announce")
+        send(session, "message")
     }
 
     fun execute(session: Session) {
         send(session, "execute")
+        if (Globals.testing) return
         session.run()
     }
 
@@ -114,6 +124,10 @@ class Voting(val users: Users): Displayable {
     }
 
     fun send(session: Session, key: String) {
+        if(Globals.testing) {
+            Bundle.send(session.key(key), *session.args)
+            return
+        }
         users.send(session.key(key), *session.args)
         users.send("voting.announcedBy", session.user.inner.name)
     }

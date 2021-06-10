@@ -10,6 +10,7 @@ import game.Voting
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import mindustry_plugin_utils.Logger
+import org.jetbrains.exposed.sql.checkExcessiveIndices
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -22,7 +23,7 @@ class CommandTest {
     private val logger = Logger("config/logger.json")
     private val users = Users(driver, logger, ranks, config)
     private val handler = Handler(users, logger, config, Command.Kind.Game)
-    private val discord = Discord(logger = logger, driver = driver)
+    private val discord = Discord(logger = logger, driver = driver, users = users)
     private val voting = Voting(users)
 
 
@@ -30,7 +31,7 @@ class CommandTest {
         handler.init(CommandHandler("/"))
         handler.reg(Help.Game(handler))
         handler.reg(Execute(driver))
-        handler.reg(SetRank(driver, users, ranks))
+        handler.reg(SetRank(driver, users, ranks, discord))
         handler.reg(Account(driver, users, discord, config, ranks))
         handler.reg(Configure(mapOf()))
 
@@ -114,7 +115,7 @@ class CommandTest {
     fun setrank() {
         users.test("asd", "other")
 
-        val s = SetRank(driver, users, ranks)
+        val s = SetRank(driver, users, ranks, discord)
         s.kind = Command.Kind.Game
         s.user = users.test()
 
@@ -323,8 +324,55 @@ class CommandTest {
 
     @Test
     fun votekick() {
-        val v = VoteKick(driver, users, ranks, voting)
+        val v = VoteKick(driver, users, ranks, voting, discord)
         v.user = users.test()
         v.assert(Command.Generic.NotFound, "hello#10")
+    }
+
+    @Test
+    fun maps() {
+        val mm = MapManager(driver)
+        mm.kind = Command.Kind.Cmd
+        File("config/maps/caldera.msav").delete()
+        mm.run(arrayOf("add", "testData/caldera.msav"))
+
+        val m = Maps(config, voting, driver)
+        m.user = users.test()
+
+        m.assert(Command.Generic.Success, "list")
+        m.assert(Command.Generic.Success, "list", "a")
+        m.assert(Command.Generic.Success, "list", "1")
+
+        m.assert(Command.Generic.NotFound, "change", "2")
+        m.assert(Maps.Result.NotActive, "change", "1")
+        m.assert(Maps.Result.NotActive, "change", "Caldera")
+        mm.assert(Command.Generic.Success, "activate", "1")
+        m.assert(Command.Generic.Vote, "change", "1")
+
+        m.assert(Command.Generic.Vote, "restart")
+
+        m.assert(Command.Generic.Vote, "end")
+    }
+
+    @Test
+    fun mapmanager() {
+        val m = MapManager(driver)
+        m.kind = Command.Kind.Cmd
+
+        m.assert(Command.Generic.NotFound, "add", "something")
+        m.assert(MapManager.Result.Invalid, "add", "password.txt")
+        m.assert(Command.Generic.Success, "add", "testData/caldera.msav")
+
+        m.assert(Command.Generic.NotEnough, "update", "2")
+        m.assert(MapManager.Result.Nonexistent, "update", "2", "testData/caldera.msav")
+        m.assert(Command.Generic.Success, "update", "1", "testData/caldera.msav")
+
+        m.assert(Command.Generic.Success, "remove", "1")
+        m.assert(MapManager.Result.Nonexistent, "remove", "1")
+        m.assert(Command.Generic.Success, "add", "testData/caldera.msav")
+
+        m.assert(Command.Generic.Success, "activate", "2")
+        m.assert(Command.Generic.Success, "deactivate", "2")
+        m.assert(MapManager.Result.Error, "deactivate", "2")
     }
 }

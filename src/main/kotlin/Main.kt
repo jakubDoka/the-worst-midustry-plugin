@@ -20,11 +20,11 @@ import java.io.File
 class Main : Plugin(), Reloadable {
     private val config = Config()
 
-    private val root = "config/mods/worst/"
-    override val configPath = root + "config.json"
-    private val logger = Logger(root + "logger/config.json")
-    private val ranks = Ranks(root + "ranks/config.json")
-    private val driver = Driver(root + "databaseDriver/config.json", ranks)
+
+    override val configPath = Globals.root + "config.json"
+    private val logger = Logger(Globals.root + "logger/config.json")
+    private val ranks = Ranks(Globals.root + "ranks/config.json")
+    private val driver = Driver(Globals.root + "databaseDriver/config.json", ranks)
     private val users = Users(driver, logger, ranks, config)
     private val voting = Voting(users)
     private val hud = Hud(users, arrayOf(voting), logger)
@@ -40,7 +40,7 @@ class Main : Plugin(), Reloadable {
     private val game = Handler(users, logger, config, Command.Kind.Game)
     private val terminal = Handler(users, logger, config, Command.Kind.Cmd)
 
-    private val discord = Discord(root + "bot/config.json", logger, driver, users) {
+    private val discord = Discord(Globals.root + "bot/config.json", logger, driver, users) {
         it.reg(Help.Discord(it, game))
         it.reg(Execute(driver))
         it.reg(SetRank(driver, users, ranks, it))
@@ -49,6 +49,7 @@ class Main : Plugin(), Reloadable {
         it.reg(Profile(driver, ranks, users))
         it.reg(Search(ranks))
         it.reg(RankInfo(ranks, users.quests))
+        it.reg(MapManager(driver))
     }
 
     override fun reload() {
@@ -92,10 +93,12 @@ class Main : Plugin(), Reloadable {
         game.reg(Look(ranks, users))
         game.reg(RankInfo(ranks, users.quests))
         game.reg(Vote(voting))
-        val test = VerificationTest("$root/tests", ranks, users, config)
+        val test = VerificationTest("${Globals.root}/tests", ranks, users, config)
         game.reg(test)
         game.reg(VoteKick(driver, users, ranks, voting, discord))
         game.reg(Spawn())
+        game.reg(Maps(config, voting, driver))
+        game.reg(MapManager(driver))
 
         reloadable["test"] = test
     }
@@ -111,6 +114,7 @@ class Main : Plugin(), Reloadable {
         terminal.reg(Profile(driver, ranks, users))
         terminal.reg(Search(ranks))
         terminal.reg(RankInfo(ranks, users.quests))
+        terminal.reg(MapManager(driver))
     }
 
     private fun bulkRemove(handler: CommandHandler, toRemove: String) {

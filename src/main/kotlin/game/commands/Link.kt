@@ -38,9 +38,7 @@ Link(val driver: Driver, val discord: Discord): Command("link") {
         } else {
             discord.verificationQueue[id] = Discord.CodeData(code, message!!.author.get().id.asString())
             try {
-                send("link.failedDm")
                 dm.sendPrivate("link.code", code)
-                send("link.failedDm")
             } catch (e: Exception) {
                 send("link.failedDm")
                 return Result.SendFailed

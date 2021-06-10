@@ -40,7 +40,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
             if(user.mount != null) {
                 user.mount!!.kill()
                 user.mount = null
-                user.data.stats.lastDeath = Time.millis()
+                user.data.stats.onDeath()
             }
         }
 
@@ -57,7 +57,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
             var uuid: String? = null
             if(it.unit.isPlayer) {
                 val user = get(it.unit.player.uuid())!!
-                user.data.stats.lastDeath = Time.millis()
+                user.data.stats.onDeath()
                 user.data.stats.deaths++
                 uuid = user.inner.uuid()
             }

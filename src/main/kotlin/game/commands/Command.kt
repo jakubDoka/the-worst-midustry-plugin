@@ -2,6 +2,7 @@ package game.commands
 
 import arc.Core
 import bundle.Bundle
+import cfg.Globals
 import db.Driver
 import db.Ranks
 import discord4j.core.`object`.entity.Message
@@ -10,7 +11,9 @@ import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Color
 import game.u.User
 import mindustry_plugin_utils.Templates
+import java.io.File
 import java.lang.Long.parseLong
+import java.net.URL
 import java.util.function.Consumer
 
 // Command is a base class for all commands and implements some common utility
@@ -99,12 +102,32 @@ abstract class Command(val name: String, val control: Ranks.Control = Ranks.Cont
         }
     }
 
+    fun alertPlain(text: String) {
+        when(kind) {
+            Kind.Game -> user!!.alert(text)
+            else -> dm.alertPlain(text)
+        }
+    }
+
     val bundle get() = when(kind) {
         Kind.Game -> user!!.data.bundle
         else -> author?.bundle ?: Bundle.defaultBundle
     }
 
     val data get() = user?.data ?: author
+
+    fun loadDiscordAttachment(to: String): File {
+        val map = message!!.attachments.first().data
+        val file = File(Globals.root + "/discord/$to/" + map.filename())
+        if(!file.exists()) {
+            file.parentFile.mkdirs()
+            file.createNewFile()
+        }
+
+        file.writeBytes(URL(map.url()).readBytes())
+
+        return file
+    }
 
     class DiscordMessenger(val command: Command) {
         fun send(key: String, vararg args: Any) {
@@ -134,6 +157,12 @@ abstract class Command(val name: String, val control: Ranks.Control = Ranks.Cont
                 it.setTitle(translate(titleKey))
                 it.setDescription(translate(bodyKey, *arguments))
                 it.setColor(Color.CYAN)
+            }
+        }
+
+        fun alertPlain(text: String) {
+            send {
+                it.setDescription(text)
             }
         }
 

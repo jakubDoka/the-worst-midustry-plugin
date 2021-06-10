@@ -178,6 +178,6 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
     }
 
     enum class Perm {
-        None, Skip, Scream, VoteKick
+        None, Skip, Scream, VoteKick, Maps
     }
 }

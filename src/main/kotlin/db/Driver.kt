@@ -8,6 +8,7 @@ import cfg.Reloadable
 import com.beust.klaxon.Json
 import com.beust.klaxon.Klaxon
 import kotlinx.coroutines.runBlocking
+import mindustry.Vars
 import mindustry.gen.Player
 import mindustry_plugin_utils.Messenger
 import mindustry_plugin_utils.Fs
@@ -17,6 +18,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.lang.Integer.max
+import java.lang.RuntimeException
 import java.sql.ResultSet
 import java.util.*
 import kotlin.collections.HashSet
@@ -28,6 +30,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
     private lateinit var con: Database
     private val outlook = Lookout()
     val users = UserManager(ranks, outlook, this)
+    val maps = MapManager()
 
     // loads the config and opens db connection
     init {
@@ -63,8 +66,8 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
 
     fun drop() {
         transaction {
-            if(Globals.testing) SchemaUtils.drop(Users, Bans, Progress)
-            SchemaUtils.create(Users, Bans, Progress)
+            if(Globals.testing) SchemaUtils.drop(Users, Bans, Progress, Maps)
+            SchemaUtils.create(Users, Bans, Progress, Maps)
             transaction {
                 exec("create index if not exists points on Users (points desc)")
             }
@@ -141,7 +144,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
 
     class UserManager(val ranks: Ranks, val outlook: Lookout, val driver: Driver) {
         fun exists(id: Long): Boolean {
-            return transaction { !Users.select{Users.id eq id}.empty() }
+            return transaction { !Users.slice(Users.id).select{Users.id eq id}.empty() }
         }
 
         // newUser creates user with set and done name, ip address and uuid can be changed,
@@ -477,6 +480,118 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
 
         fun onDeath() {
             lastDeath = Time.millis()
+        }
+    }
+
+    object Maps: LongIdTable() {
+        val name = text("name")
+        val author = text("author")
+        val played = long("played").default(0)
+        val won = long("won").default(0)
+        val fileName = text("fileName")
+        val file = binary("file")
+    }
+
+    class MapData(row: ResultRow, loadFile: Boolean = false) {
+        val name = row[Maps.name]
+        val author = row[Maps.author]
+        val played = row[Maps.played]
+        val won = row[Maps.won]
+        val fileName = row[Maps.fileName]
+        val file = if(loadFile) row[Maps.file] else null
+    }
+
+    class MiniMapData(row: ResultRow) {
+        val active = Globals.mapSiActive(row[Maps.fileName])
+        val name = row[Maps.name]
+        val id = row[Maps.id]
+    }
+
+    class MapManager {
+        fun loadMapDataContains(name: String): MapData? {
+            return loadMapData { Maps.name.like("%$name%") }
+        }
+
+        fun loadMapData(name: String): MapData? {
+            return loadMapData { Maps.name eq name }
+        }
+
+        fun loadMapData(id: Long): MapData? {
+            return loadMapData { Maps.id eq id}
+        }
+
+        fun loadMapList(): List<MiniMapData> {
+            return transaction {
+                val list = ArrayList<MiniMapData>()
+                Maps.slice(Maps.name, Maps.id, Maps.fileName).selectAll().forEach {
+                    list.add(MiniMapData(it))
+                }
+                list
+            }
+        }
+
+        private fun loadMapData(cond: SqlExpressionBuilder.() -> Op<Boolean>): MapData? {
+            return transaction {
+                val q = Maps.slice(Maps.name, Maps.author, Maps.played, Maps.won, Maps.fileName).select(cond)
+                if (q.empty()) {
+                    null
+                } else {
+                    MapData(q.first())
+                }
+            }
+        }
+
+        fun add(map: mindustry.maps.Map): Long {
+            return transaction {
+                Maps.insertAndGetId {
+                    it[name] = map.name()
+                    it[author] = map.author()
+                    it[file] = map.file.readBytes()
+                    it[fileName] = map.file.name()
+                }.value
+            }
+        }
+
+        fun update(id: Long, map: mindustry.maps.Map) {
+            transaction {
+                Maps.update({ Maps.id eq id }) {
+                    it[name] = map.name()
+                    it[author] = map.author()
+                    it[file] = map.file.readBytes()
+                    it[fileName] = map.file.name()
+                }
+            }
+        }
+
+        fun remove(id: Long): Boolean {
+            return transaction { Maps.deleteWhere { Maps.id eq id } == 1 }
+        }
+
+        fun activate(id: Long) {
+            val map = transaction { Maps.slice(Maps.file, Maps.fileName).select { Maps.id eq id }.first() }
+            val dest = File("config/maps/${map[Maps.fileName]}")
+            if(!dest.exists()) {
+                dest.parentFile.mkdirs()
+                dest.createNewFile()
+            }
+            dest.writeBytes(map[Maps.file])
+            reload()
+        }
+
+        fun deactivate(id: Long) {
+            val map = transaction { Maps.slice(Maps.fileName).select { Maps.id eq id }.first() }
+            if (!File("config/maps/${map[Maps.fileName]}").delete()) {
+                throw RuntimeException("Already deactivated.")
+            }
+            reload()
+        }
+
+        fun exists(id: Long): Boolean {
+            return transaction { Maps.slice(Maps.id).select { Maps.id eq id }.count() != 0L }
+        }
+
+        fun reload() {
+            if(!Globals.testing) Vars.maps.reload()
         }
     }
 }

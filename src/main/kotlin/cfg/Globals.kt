@@ -1,8 +1,10 @@
 package cfg
 
+import db.Driver
 import mindustry.content.UnitTypes
 import mindustry.type.UnitType
 import mindustry_plugin_utils.Templates
+import java.io.File
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
@@ -10,6 +12,7 @@ import kotlin.reflect.jvm.kotlinProperty
 
 object Globals {
     var testing = false
+    val root = "config/mods/worst/"
 
     fun listUnits(): String {
         return propertyList(UnitTypes::class.java)
@@ -39,5 +42,9 @@ object Globals {
 
     fun discordMessage(name: String, message: String): String {
         return Templates.cleanColors(String.format("**%s >** %s", name, message))
+    }
+
+    fun mapSiActive(fileName: String): Boolean {
+        return File("config/maps/${fileName}").exists()
     }
 }
