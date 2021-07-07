@@ -22,8 +22,8 @@ class Loadout(override val configPath: String) : Reloadable {
         reload()
     }
 
-    fun launch(condition: String, amount: Long): Boolean {
-        val core = Vars.state.teams.get(Team.sharded).core() ?: return false
+    fun launch(condition: String, amount: Long) {
+        val core = Vars.state.teams.get(Team.sharded).core() ?: return
 
         for(i in Globals.itemList()) {
             val coreAmount = core.items.get(i).toLong()
@@ -32,10 +32,9 @@ class Loadout(override val configPath: String) : Reloadable {
                 items.inc(i, toSend)
                 core.items.remove(i, toSend.toInt())
             }
-
         }
 
-        return true
+        save()
     }
 
     fun save() {
@@ -58,6 +57,7 @@ class Loadout(override val configPath: String) : Reloadable {
         } catch (e: Exception) {
             e.printStackTrace()
             messenger.log("Failed to load items.")
+            save()
         }
     }
 

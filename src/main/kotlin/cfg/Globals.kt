@@ -19,7 +19,7 @@ object Globals {
     var testing = false
     const val root = "config/mods/worst/"
     const val botRoot = root + "bot/"
-
+    const val coreIcon = "\uF869"
 
 
     // the magic it self
@@ -82,7 +82,7 @@ object Globals {
         if(!this::itemString.isInitialized) {
             itemString = Items::class.java.declaredFields.joinTo(StringBuilder(), "") {
                 val item = item(it.name)!!
-                "[${item.color}]${item.name}[]"
+                "[#${item.color}]${item.name}[]"
             }.toString()
         }
         return itemString

@@ -5,10 +5,15 @@ import cfg.Config
 import cfg.Globals
 import db.Driver
 import db.Ranks
+import game.Docks
+import game.Loadout
 import game.Users
 import game.Voting
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import mindustry.Vars
+import mindustry.content.Items
+import mindustry.core.ContentLoader
 import mindustry_plugin_utils.Logger
 import org.jetbrains.exposed.sql.checkExcessiveIndices
 import org.junit.jupiter.api.AfterEach
@@ -25,9 +30,14 @@ class CommandTest {
     private val handler = Handler(users, logger, config, Command.Kind.Game)
     private val discord = Discord(logger = logger, driver = driver, users = users)
     private val voting = Voting(users)
+    private val loadout = Loadout("config/items.json")
+    private val docks = Docks("config/docks.json", users)
 
 
     init {
+        Vars.content = ContentLoader()
+        Items().load()
+
         handler.init(CommandHandler("/"))
         handler.reg(Help.Game(handler))
         handler.reg(Execute(driver))
@@ -374,5 +384,23 @@ class CommandTest {
         m.assert(Command.Generic.Success, "activate", "2")
         m.assert(Command.Generic.Success, "deactivate", "2")
         m.assert(MapManager.Result.Error, "deactivate", "2")
+    }
+
+    @Test
+    fun loadout() {
+        val l = LoadoutC(loadout, docks, voting)
+
+        l.user = users.test()
+
+        l.assert(Command.Generic.Success, "status")
+        l.assert(Command.Generic.NotAInteger, "store", "foo", "blue")
+
+        l.assert(LoadoutC.Result.Error, "store", "10", "where foo")
+        l.assert(LoadoutC.Result.InvalidItem, "store", "10", "itemName == \"coal\" and itemAmount < 30")
+        l.assert(Command.Generic.Success, "store", "10", "coal")
+        l.assert(Command.Generic.Success, "store", "10", "where itemName == \"coal\" and itemAmount < 30")
+
+        l.assert(LoadoutC.Result.Redundant, "load", "0", "coal")
+        l.assert(Command.Generic.Success, "load", "10", "coal")
     }
 }

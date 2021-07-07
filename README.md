@@ -58,7 +58,7 @@ suggestion correctly, so I don't have to do it. (and I will not)
     - [x] relations - rank ca be obtained only if you already have some ranks
     - [x] discord roles - ranks can be obtained only trough presence of discord role
     - [x] points - all yor stats are evaluated into total score
-  - [ ] pets - cosmetic accessory related to rank (particle trail that flies around you)
+  - [x] pets - cosmetic accessory related to rank (particle trail that flies around you)
     - [ ] shooting pets - some pets can shoot projectiles on enemy  
   - [x] mounts - rank can grant you ability to transform into bigger unit
   - [x] color transition - some ranks use color transition (text smoothly interpolates colors)
@@ -73,8 +73,8 @@ suggestion correctly, so I don't have to do it. (and I will not)
     - [x] hammer - hammer also works as votekick command, vanilla version is completely replaced
   - [ ] /kickafk - kicks afk players
 - [x] bundle - plugin supports language bundles
-- [ ] inspect - shows information about actions regarding tiles
-- [ ] /loadout - stores resource for later and adds special ways to spend them
+- [x] inspect - shows information about actions regarding tiles
+- [x] /loadout - stores resource for later and adds special ways to spend them
   - [ ] /buildcore - build core from loadout resources
   - [ ] /factory - build units from loadout resources and send them as backup
   - [ ] /boost - spend loadout resources on special boosts like building speed (not sure if it is possible)

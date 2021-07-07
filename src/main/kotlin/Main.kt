@@ -6,10 +6,8 @@ import com.beust.klaxon.Klaxon
 import db.Driver
 import db.Ranks
 import game.*
+import game.Loadout
 import game.commands.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import mindustry.game.EventType
 import mindustry.mod.Plugin
 import mindustry_plugin_utils.Fs
@@ -26,8 +24,10 @@ class Main : Plugin(), Reloadable {
     private val driver = Driver(Globals.root + "databaseDriver/config.json", ranks)
     private val users = Users(driver, logger, ranks, config)
     private val voting = Voting(users)
-    private val hud = Hud(users, arrayOf(voting), logger)
-    private val pets = Pets(users, logger, Globals.root + "pets.json")
+    private val pets = Pets(users, logger, Globals.root + "pets/config.json")
+    private val loadout = Loadout(Globals.root + "loadout/data.json")
+    private val docks = Docks(Globals.root + "docks/config.json", users, logger)
+    private val hud = Hud(users, arrayOf(voting, docks), logger)
 
 
     private val filter = Filter(users, ranks, logger, config)
@@ -36,6 +36,8 @@ class Main : Plugin(), Reloadable {
         "driver" to driver,
         "ranks" to ranks,
         "pets" to pets,
+        "loadout" to loadout,
+        "docks" to docks,
     )
 
     private val game = Handler(users, logger, config, Command.Kind.Game)
@@ -101,6 +103,7 @@ class Main : Plugin(), Reloadable {
         game.reg(Spawn())
         game.reg(Maps(config, voting, driver))
         game.reg(MapManager(driver))
+        game.reg(LoadoutC(loadout, docks, voting))
 
         reloadable["test"] = test
     }
