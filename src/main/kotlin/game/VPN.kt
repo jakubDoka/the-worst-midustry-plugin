@@ -22,6 +22,7 @@ class VPN(val config: Config, users: Users) {
                         inp.data.ban()
                         Core.app.post {
                             users.reload(inp)
+                            inp.send("vpn.detected")
                         }
                     }
                 }

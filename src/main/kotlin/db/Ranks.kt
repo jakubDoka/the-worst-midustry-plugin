@@ -92,7 +92,8 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
             description = mapOf(
                 "default" to "Only thous who supported server with least 3000 lines of code can own this" +
                         " rank. Of course code has to be at least as useful as code there already is."
-            )
+            ),
+            pets = listOf("somePet")
         ))
         put("owner", Rank(
             "#d1c113",
@@ -135,6 +136,7 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
         val description: Map<String, String> = mapOf(),
         val unit: String = "",
         val unitRecharge: Long = 0,
+        val pets: List<String> = listOf(),
     ) {
 
         @Json(ignored = true)
@@ -178,6 +180,6 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
     }
 
     enum class Perm {
-        None, Skip, Scream, VoteKick, Maps
+        None, Skip, Scream, VoteKick, Maps, Store, Load
     }
 }

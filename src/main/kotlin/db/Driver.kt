@@ -4,6 +4,7 @@ import arc.struct.Seq
 import arc.util.Time
 import bundle.Bundle
 import cfg.Globals
+import cfg.Globals.ensure
 import cfg.Reloadable
 import com.beust.klaxon.Json
 import com.beust.klaxon.Klaxon
@@ -570,10 +571,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         fun activate(id: Long) {
             val map = transaction { Maps.slice(Maps.file, Maps.fileName).select { Maps.id eq id }.first() }
             val dest = File("config/maps/${map[Maps.fileName]}")
-            if(!dest.exists()) {
-                dest.parentFile.mkdirs()
-                dest.createNewFile()
-            }
+            dest.ensure()
             dest.writeBytes(map[Maps.file])
             reload()
         }

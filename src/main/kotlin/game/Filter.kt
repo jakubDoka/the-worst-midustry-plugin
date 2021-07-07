@@ -1,31 +1,36 @@
 package game
 
-import arc.math.Mathf
+import arc.util.Time
+import cfg.Config
 import cfg.Globals
+import db.Driver
 import db.Ranks
 import game.u.User
 import mindustry.Vars
 import mindustry.game.EventType
-import mindustry.net.Administration
 import mindustry.world.Tile
 import java.lang.Integer.max
 import java.lang.Integer.min
 import mindustry.net.Administration.ActionType;
 import mindustry_plugin_utils.Logger
-import mindustry_plugin_utils.Templates
 import mindustry.gen.Call
+import java.lang.StringBuilder
 
 
 // handles actions and message filtering
-class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
+class Filter(val users: Users, val ranks: Ranks, val logger: Logger, val config: Config) {
     var map = LockMap()
+    val inspect = Inspect(map, config, users, logger)
 
     fun init() {
-        logger.on(EventType.PlayEvent::class.java) { map.resize(Vars.world.width(), Vars.world.height()) }
+        logger.on(EventType.PlayEvent::class.java) {
+            map.resize(Vars.world.width(), Vars.world.height())
+            inspect.doubleTaps.clear()
+        }
 
         logger.on(EventType.BlockDestroyEvent::class.java) { map.unlock(it.tile) }
 
-        logger.on(EventType.BlockBuildEndEvent::class.java) { map.unlock(it.tile) }
+        logger.on(EventType.BlockBuildEndEvent::class.java) { if(it.breaking) map.unlock(it.tile) }
 
         logger.run(EventType.Trigger.update) {
             users.forEach { _, u ->
@@ -63,6 +68,8 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
                 else -> {}
             }
 
+            inspect.denote(it.tile, user.data, it.type)
+
             return@addActionFilter true
         }
 
@@ -88,20 +95,70 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger) {
         }
 
         fun canInteract(tile: Tile, user: User): Boolean {
-            return tiles[tile.y.toInt()][tile.x.toInt()].lock <= user.data.rank.control.value
+            return tile(tile).lock <= user.data.rank.control.value
         }
 
         fun update(tile: Tile, user: User) {
-            val t = tiles[tile.y.toInt()][tile.x.toInt()]
+            val t = tile(tile)
             t.lock = min(max(user.data.rank.control.value, t.lock), Ranks.Control.Normal.value)
         }
 
         fun unlock(tile: Tile) {
-            tiles[tile.y.toInt()][tile.x.toInt()].lock = Ranks.Control.Minimal.value
+            tile(tile).lock = Ranks.Control.Minimal.value
+        }
+
+        fun tile(tile: Tile): LockTile {
+            return tiles[tile.y.toInt()][tile.x.toInt()]
         }
     }
 
     class LockTile {
         var lock: Int = Ranks.Control.Minimal.value
+        val inspectData = mutableListOf<Inspect.Data>()
+    }
+
+    class Inspect(val map: LockMap, val config: Config, users: Users, logger: Logger) {
+        val doubleTaps = mutableMapOf<Long, TapData>()
+        init {
+            logger.on(EventType.TapEvent::class.java) {
+                val user = users[it.player.uuid()]!!
+                val last = doubleTaps[user.data.id]
+                if (last == null || (last.tile.x != it.tile.x && last.tile.y != it.tile.y)
+                    || Time.millis() - last.timestamp > config.data.doubleTapSensitivity) {
+                    doubleTaps[user.data.id] = TapData(it.tile)
+                    return@on
+                }
+                Call.label(it.player.con, summarize(it.tile), 5f, it.tile.worldx(), it.tile.worldy())
+            }
+        }
+
+        fun denote(tile: Tile, user: Driver.RawUser, action: ActionType) {
+            val data = map.tile(tile).inspectData
+            if(data.isNotEmpty() && data.last().name == user.idName() && data.last().action == action) return
+            data.add(Data(user.idName(), user.rank.postfix, action))
+            if(data.size > config.data.inspectHistorySize)
+                data.removeAt(0)
+        }
+
+        fun summarize(tile: Tile): String {
+            val t = map.tile(tile)
+            val sb = StringBuilder()
+
+            sb.append("lock: ").append(t.lock).append("\n")
+
+            for(e in t.inspectData)
+                sb
+                    .append(e.name)
+                    .append(" - ")
+                    .append(e.rank)
+                    .append(" - ")
+                    .append(e.action)
+                    .append("\n")
+
+            return sb.substring(0, sb.length-1)
+        }
+
+        class Data(val name: String, val rank: String, val action: ActionType)
+        class TapData(val tile: Tile, val timestamp: Long = Time.millis())
     }
 }

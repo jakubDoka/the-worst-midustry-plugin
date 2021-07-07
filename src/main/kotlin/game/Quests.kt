@@ -1,28 +1,16 @@
 package db
 
 import arc.Core
-import arc.util.Time
 import cfg.Globals
-import db.Driver.Progress
-import db.Driver.Users
-import discord4j.common.util.Snowflake
-import game.commands.Discord
-import game.commands.Profile
+import game.Pets
 import game.u.User
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mindustry.gen.Call
-import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
-import kotlin.collections.HashMap
 import kotlin.collections.HashSet
-import kotlin.contracts.contract
 import kotlin.reflect.full.declaredMemberProperties
 
 abstract class Quest(val name: String, val permanent: Boolean = true) {
@@ -61,6 +49,7 @@ abstract class Quest(val name: String, val permanent: Boolean = true) {
     }
 
     class Quests(val ranks: Ranks, val driver: Driver): HashMap<String, Quest>() {
+        lateinit var pets: Pets
         val input = Channel<User?>()
         val nonPermanent = HashSet<String>()
 
@@ -154,6 +143,9 @@ abstract class Quest(val name: String, val permanent: Boolean = true) {
                                 user.data.specials.add(k)
                                 user.send("quest.obtained", v.postfix)
                             }
+                        }
+                        if(!Globals.testing) Core.app.post {
+                            pets.populate(user)
                         }
                     }
                 }

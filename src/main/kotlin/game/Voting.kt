@@ -104,7 +104,7 @@ class Voting(val users: Users): Displayable {
         announce(session)
         queue.add(session)
         vote(queue.size - 1, session.user.data, true)
-        session.user.send("voting.success")
+        session.user.send("vote.success")
 
         return resp
     }

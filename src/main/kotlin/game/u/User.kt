@@ -3,6 +3,7 @@ package game.u
 import cfg.Globals
 import db.Driver
 import db.Ranks
+import game.Pets
 import game.Users
 import mindustry.gen.Call
 import mindustry.gen.Player
@@ -15,6 +16,7 @@ class User(val inner: Player, val data: Driver.RawUser) {
     }
 
     var mount: Unit? = null
+    val pets = mutableListOf<Pets.Pet>()
 
     init {
         if(paralyzed) {

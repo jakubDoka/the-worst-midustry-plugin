@@ -1,25 +1,70 @@
 package cfg
 
-import db.Driver
 import mindustry.content.UnitTypes
+import mindustry.entities.Effect
 import mindustry.type.UnitType
 import mindustry_plugin_utils.Templates
+import reactor.core.publisher.Mono
+import reactor.netty.ByteBufMono
+import reactor.netty.http.client.HttpClient
+import reactor.netty.http.client.HttpClientResponse
 import java.io.File
-import java.lang.reflect.Modifier
-import kotlin.reflect.KClass
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.jvm.kotlinProperty
+import java.util.function.BiFunction
+import mindustry.content.Fx
+import mindustry.content.Items
+import mindustry.type.Item
 
+// most of the content should be moved to utils
 object Globals {
     var testing = false
-    val root = "config/mods/worst/"
+    const val root = "config/mods/worst/"
+    const val botRoot = root + "bot/"
 
-    fun listUnits(): String {
-        return propertyList(UnitTypes::class.java)
+
+
+    // the magic it self
+    val itemIcons = mapOf(
+        "scrap" to "\uf830" ,
+        "copper" to "\uf838" ,
+        "lead" to "\uf837" ,
+        "graphite" to "\uf835" ,
+        "coal" to "\uf833" ,
+        "titanium" to "\uf832" ,
+        "thorium" to "\uf831" ,
+        "silicon" to "\uf82f" ,
+        "plastanium" to "\uf82e" ,
+        "phase-fabric" to "\uf82d" ,
+        "surge-alloy" to "\uf82c" ,
+        "spore-pod" to "\uf82b" ,
+        "sand" to "\uf834" ,
+        "blast-compound" to "\uf82a" ,
+        "pyratite" to "\uf829" ,
+        "metaglass" to "\uf836" ,
+    )
+
+    fun File.ensure() {
+        if(!exists()) {
+            parentFile.mkdirs()
+            createNewFile()
+        }
+    }
+
+    fun Boolean.orRun(fn: () -> Unit) {
+        if (!this) {
+            fn()
+        }
     }
 
     fun unit(name: String): UnitType? {
         return property(name, UnitTypes::class.java) as? UnitType?
+    }
+
+    fun effect(name: String): Effect? {
+        return property(name, Fx::class.java) as? Effect?
+    }
+
+    fun item(name: String): Item? {
+        return property(name, Items::class.java) as? Item?
     }
 
     fun property(name: String, target: Class<*>, obj: Any? = null): Any? {
@@ -32,8 +77,27 @@ object Globals {
         }
     }
 
-    fun propertyList(target: Class<*>): String {
-        return target.declaredFields.joinTo(StringBuilder(), " ") { it.name }.toString()
+    private lateinit var itemString: String
+    fun listItems(): String {
+        if(!this::itemString.isInitialized) {
+            itemString = Items::class.java.declaredFields.joinTo(StringBuilder(), "") {
+                val item = item(it.name)!!
+                "[${item.color}]${item.name}[]"
+            }.toString()
+        }
+        return itemString
+    }
+
+    private lateinit var items: List<Item>
+    fun itemList(): List<Item> {
+        if(!this::items.isInitialized) {
+            items = propertyList(Items::class.java).map { it as Item }
+        }
+        return items
+    }
+
+    fun propertyList(target: Class<*>): List<Any> {
+        return target.declaredFields.map { property(it.name, target)!! }
     }
 
     fun message(name: String, message: String): String {
@@ -46,5 +110,9 @@ object Globals {
 
     fun mapSiActive(fileName: String): Boolean {
         return File("config/maps/${fileName}").exists()
+    }
+
+    fun <V> downloadAttachment(url: String, fn: BiFunction<in HttpClientResponse, in ByteBufMono, out Mono<V>>): V {
+        return HttpClient.create().get().uri(url).responseSingle(fn).block()!!
     }
 }

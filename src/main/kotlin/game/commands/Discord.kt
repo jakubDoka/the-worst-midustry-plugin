@@ -40,7 +40,7 @@ class Discord(override val configPath: String = "config/discord.json", val logge
 
                 val roles = value.split(";")
 
-                val gid = handler!!.gateway.guilds.blockFirst()?.id ?: return user.translate("quest.roles.missingGuild")
+                val gid = getServerID() ?: return user.translate("quest.roles.missingGuild")
                 val u = handler!!.gateway.getMemberById(gid, Snowflake.of(user.discord)).block() ?: return user.translate("quest.roles.invalid")
 
                 val roleSet = u.roles.collectList().block()?.map { it.name }?.toSet() ?: return user.translate("quest.roles.noRoles")
@@ -57,6 +57,10 @@ class Discord(override val configPath: String = "config/discord.json", val logge
             }
         })
         reload()
+    }
+
+    fun getServerID(): Snowflake? {
+        return handler!!.gateway.guilds.blockFirst()?.id
     }
 
     override fun reload() {
@@ -121,9 +125,10 @@ class Discord(override val configPath: String = "config/discord.json", val logge
         println(msg)
     }
 
-    fun with(channel: String, run: (GuildChannel) -> Unit) {
+    fun with(channel: String, run: (GuildChannel) -> Unit): Boolean {
         val ch = handler?.channels?.get(channel)
         if(ch != null) run(ch)
+        return ch != null
     }
 
     private fun initMessenger(verbose: Boolean) {

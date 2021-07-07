@@ -39,6 +39,9 @@ suggestion correctly, so I don't have to do it. (and I will not)
     - [x] stats - plugin is counting player actions and saving then to database
   - [x] full control - modifying database can be done from server terminal, game or discord 
   - [x] /search - searching in a database can be performed by any player
+  - [x] /mapmanager - command to manage maps. They ase stored in database and can be e
+    enabled or disabled.
+    - [ ] map stats - serves should track statistics to convey what maps should be removed.
 - [x] configurations - plugin is highly configurable, all ranks can be defined by the owner of server
   - [x] /configure - gives ability to modify json config file from command like game and discord
     - [x] reloading - configuration can be reloaded while server is running
@@ -46,7 +49,6 @@ suggestion correctly, so I don't have to do it. (and I will not)
   - [x] live chat - connects discord channel on discord with in-game chat
   - [x] rank log - for rank change reports
   - [ ] command log - for command use logging
-  - [ ] maps - for map suggestions, downloading and voting  
   - [x] linking - ability to link your discord account with plugin account 
 - [x] ranks - way of administration
   - [x] customizable - player can choose witch rank to play with
@@ -66,7 +68,7 @@ suggestion correctly, so I don't have to do it. (and I will not)
   - [x] hud - voting sessions are displayed in hud (message, time, vote state)
   - [x] a permissive vote - if player has permission fitting the command, session is lot easier to pass  
   - [ ] /mute - mutes player for you
-  - [ ] /maps - command can <change|restart|end> the map or display available maps 
+  - [x] /maps - command can <change|restart|end> the map or display available maps 
   - [x] votekick - marks player griefer. After mark happens, anyone can kick player without a voting session
     - [x] hammer - hammer also works as votekick command, vanilla version is completely replaced
   - [ ] /kickafk - kicks afk players

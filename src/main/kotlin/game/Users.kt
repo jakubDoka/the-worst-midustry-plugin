@@ -164,8 +164,3 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
     }
 
 }
-
-//TODO FIx hammer.
-//TODO Griefer cannot vote kick
-//TODO Unit changing thing for ranks
-//TODO change newcomer text to white

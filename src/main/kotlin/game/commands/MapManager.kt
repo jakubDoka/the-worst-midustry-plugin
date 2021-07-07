@@ -11,6 +11,10 @@ class MapManager(val driver: Driver): Command("mapmanager", Ranks.Control.High) 
         val map = if ("add update".contains(args[0])) {
             val file = when(kind) {
                 Kind.Discord -> {
+                    if(message!!.attachments.isEmpty()) {
+                        send("mapmanager.discord.missingMap")
+                        return Generic.NotEnough
+                    }
                     try {
                         loadDiscordAttachment("maps")
                     } catch (e: Exception) {

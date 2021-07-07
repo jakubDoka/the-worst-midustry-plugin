@@ -18,24 +18,25 @@ import java.io.File
 
 
 class Main : Plugin(), Reloadable {
-    private val config = Config()
-
-
     override val configPath = Globals.root + "config.json"
+
+    private val config = Config()
     private val logger = Logger(Globals.root + "logger/config.json")
     private val ranks = Ranks(Globals.root + "ranks/config.json")
     private val driver = Driver(Globals.root + "databaseDriver/config.json", ranks)
     private val users = Users(driver, logger, ranks, config)
     private val voting = Voting(users)
     private val hud = Hud(users, arrayOf(voting), logger)
+    private val pets = Pets(users, logger, Globals.root + "pets.json")
 
 
-    private val filter = Filter(users, ranks, logger)
-    private val reloadable = HashMap(mapOf(
+    private val filter = Filter(users, ranks, logger, config)
+    private val reloadable = mutableMapOf(
         "main" to this,
         "driver" to driver,
-        "ranks" to ranks
-    ))
+        "ranks" to ranks,
+        "pets" to pets,
+    )
 
     private val game = Handler(users, logger, config, Command.Kind.Game)
     private val terminal = Handler(users, logger, config, Command.Kind.Cmd)
@@ -50,6 +51,7 @@ class Main : Plugin(), Reloadable {
         it.reg(Search(ranks))
         it.reg(RankInfo(ranks, users.quests))
         it.reg(MapManager(driver))
+        it.reg(Maps(config, voting, driver))
     }
 
     override fun reload() {
@@ -115,6 +117,7 @@ class Main : Plugin(), Reloadable {
         terminal.reg(Search(ranks))
         terminal.reg(RankInfo(ranks, users.quests))
         terminal.reg(MapManager(driver))
+        terminal.reg(Maps(config, voting, driver))
     }
 
     private fun bulkRemove(handler: CommandHandler, toRemove: String) {

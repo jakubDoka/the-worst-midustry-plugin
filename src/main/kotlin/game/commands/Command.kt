@@ -3,6 +3,7 @@ package game.commands
 import arc.Core
 import bundle.Bundle
 import cfg.Globals
+import cfg.Globals.ensure
 import db.Driver
 import db.Ranks
 import discord4j.core.`object`.entity.Message
@@ -11,10 +12,16 @@ import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Color
 import game.u.User
 import mindustry_plugin_utils.Templates
+import reactor.netty.http.client.HttpClient
 import java.io.File
+import java.lang.Double.parseDouble
 import java.lang.Long.parseLong
+import java.lang.RuntimeException
+import java.net.URI
 import java.net.URL
 import java.util.function.Consumer
+import java.util.regex.Pattern
+import kotlin.reflect.jvm.internal.impl.load.kotlin.JvmType
 
 // Command is a base class for all commands and implements some common utility
 abstract class Command(val name: String, val control: Ranks.Control = Ranks.Control.Minimal) {
@@ -118,13 +125,10 @@ abstract class Command(val name: String, val control: Ranks.Control = Ranks.Cont
 
     fun loadDiscordAttachment(to: String): File {
         val map = message!!.attachments.first().data
-        val file = File(Globals.root + "/discord/$to/" + map.filename())
-        if(!file.exists()) {
-            file.parentFile.mkdirs()
-            file.createNewFile()
-        }
+        val file = File(Globals.botRoot + "$to/" + map.filename())
+        file.ensure()
 
-        file.writeBytes(URL(map.url()).readBytes())
+        file.writeBytes(Globals.downloadAttachment(map.url()){ _, mono -> mono.asByteArray()})
 
         return file
     }
@@ -189,6 +193,6 @@ abstract class Command(val name: String, val control: Ranks.Control = Ranks.Cont
     }
 
     enum class Generic {
-        Success, NotAInteger, Mismatch, NotEnough, NotFound, NotSupported, Denied, Vote
+        Success, NotAInteger, Mismatch, NotEnough, NotFound, NotSupported, Denied, Vote, LoadFailed
     }
 }
