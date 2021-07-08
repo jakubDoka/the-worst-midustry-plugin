@@ -236,6 +236,8 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         var ip = row?.get(Users.ip) ?: ""
         var discord = row?.get(Users.discord) ?: Users.noDiscord
         var password = row?.get(Users.password) ?: Users.noPassword
+        var muted = row?.get(Users.muted)?.split(" ")?.filter { it != "" }?.map { it.toLong() }?.toMutableSet() ?: mutableSetOf()
+        var mutedForAll = row?.get(Users.mutedForAll) ?: false
 
         var rank = ranks[row?.get(Users.rank)] ?: ranks.paralyzed
         var display = ranks[row?.get(Users.display)] ?: rank
@@ -274,6 +276,8 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
             transaction {
                 Users.update({ Users.id eq this@RawUser.id }) {
                     it[specials] = this@RawUser.specials.joinTo(StringBuilder(), " ").toString()
+                    it[muted] = this@RawUser.muted.joinTo(StringBuilder(), " ").toString()
+                    it[mutedForAll] = this@RawUser.mutedForAll
                     it[name] = this@RawUser.name
                     it[discord] = this@RawUser.discord
                     it[password] = this@RawUser.password
@@ -365,6 +369,8 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         val discord = text("discord").index().default(noDiscord)
         val ip = text("ip").index()
         val bornDate = long("bornDate")
+        val muted = text("muted").default("")
+        val mutedForAll = bool("mutedForAll").default(false)
 
         val password = text("password").default(noPassword)
         val rank = text("rank").default(defaultRank)

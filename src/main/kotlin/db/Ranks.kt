@@ -126,7 +126,7 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
     class Rank(
         val color: String = "red",
         val displayed: Boolean = true,
-        val control: Control = Control.None,
+        var control: Control = Control.None,
         val voteValue: Int = 1,
         val perms: Set<Perm> = setOf(),
         val value: Int = 0,

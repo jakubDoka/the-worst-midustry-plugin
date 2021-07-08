@@ -24,9 +24,10 @@ class Docks(override val configPath: String, val users: Users, logger: Logger) :
 
     init {
         logger.on(EventType.GameOverEvent::class.java) {
-            users.send("docks.bail")
+            val prev = ships.size
             val iter = ships.iterator()
             while(iter.hasNext()) if(iter.next().bail) iter.remove()
+            if(prev != ships.size) users.send("docks.bail")
         }
         reload()
     }

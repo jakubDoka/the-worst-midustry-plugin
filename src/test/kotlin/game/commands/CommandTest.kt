@@ -16,6 +16,9 @@ import mindustry.content.Items
 import mindustry.core.ContentLoader
 import mindustry_plugin_utils.Logger
 import org.jetbrains.exposed.sql.checkExcessiveIndices
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -31,7 +34,7 @@ class CommandTest {
     private val discord = Discord(logger = logger, driver = driver, users = users)
     private val voting = Voting(users)
     private val loadout = Loadout("config/items.json")
-    private val docks = Docks("config/docks.json", users)
+    private val docks = Docks("config/docks.json", users, logger)
 
 
     init {
@@ -402,5 +405,22 @@ class CommandTest {
 
         l.assert(LoadoutC.Result.Redundant, "load", "0", "coal")
         l.assert(Command.Generic.Success, "load", "10", "coal")
+    }
+
+    @Test
+    fun mute() {
+        val m = Mute(driver, users)
+
+        m.user = users.test()
+
+        m.assert(Command.Generic.Denied, "1", "all")
+        m.assert(Command.Generic.NotFound, "2")
+
+        m.user!!.data.rank.control = Ranks.Control.High
+        m.assert(Command.Generic.Success, "1")
+        m.assert(Command.Generic.Success, "1", "all")
+
+        m.assert(Command.Generic.Success, "1")
+        m.assert(Command.Generic.Success, "1", "all")
     }
 }

@@ -27,6 +27,7 @@ class Main : Plugin(), Reloadable {
     private val pets = Pets(users, logger, Globals.root + "pets/config.json")
     private val loadout = Loadout(Globals.root + "loadout/data.json")
     private val docks = Docks(Globals.root + "docks/config.json", users, logger)
+    private val verificationTest = VerificationTest(Globals.root + "tests", ranks, users, config)
     private val hud = Hud(users, arrayOf(voting, docks), logger)
 
 
@@ -38,6 +39,7 @@ class Main : Plugin(), Reloadable {
         "pets" to pets,
         "loadout" to loadout,
         "docks" to docks,
+        "test" to verificationTest
     )
 
     private val game = Handler(users, logger, config, Command.Kind.Game)
@@ -97,15 +99,13 @@ class Main : Plugin(), Reloadable {
         game.reg(Look(ranks, users))
         game.reg(RankInfo(ranks, users.quests))
         game.reg(Vote(voting))
-        val test = VerificationTest("${Globals.root}/tests", ranks, users, config)
-        game.reg(test)
+        game.reg(verificationTest)
         game.reg(VoteKick(driver, users, ranks, voting, discord))
         game.reg(Spawn())
         game.reg(Maps(config, voting, driver))
         game.reg(MapManager(driver))
         game.reg(LoadoutC(loadout, docks, voting))
-
-        reloadable["test"] = test
+        game.reg(Mute(driver, users))
     }
 
     override fun registerServerCommands(handler: CommandHandler) {

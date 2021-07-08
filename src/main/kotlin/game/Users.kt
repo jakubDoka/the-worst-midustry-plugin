@@ -2,6 +2,7 @@ package game
 
 import arc.util.Time
 import cfg.Config
+import cfg.Globals
 import db.Driver
 import db.Quest
 import db.Ranks
@@ -161,6 +162,18 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
 
     fun send(key: String, vararg args: Any) {
         forEach { _, v -> v.send(key, *args) }
+    }
+
+    fun sendUserMessage(user: User, message: String) {
+        forEach { _, v ->
+            v.sendPlain(Globals.message(user.data.idName(), user.data.colorMessage(
+                if(v.data.muted.contains(user.data.id)) {
+                    v.data.translate("mute.muted", user.data.id)
+                } else {
+                    message
+                }
+            )))
+        }
     }
 
 }

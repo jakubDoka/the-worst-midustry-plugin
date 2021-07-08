@@ -81,7 +81,8 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger, val config:
                 s = s.toLowerCase()
             }
 
-            Call.sendMessage(Globals.message(u.data.idName(), u.data.colorMessage(s)))
+            if(!u.data.mutedForAll) users.sendUserMessage(u, message)
+            else u.send("mute.mutedForAll")
 
             return@addChatFilter null
         }
