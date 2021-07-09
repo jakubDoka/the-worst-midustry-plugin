@@ -67,7 +67,7 @@ suggestion correctly, so I don't have to do it. (and I will not)
 - [x] voting sessions - every player can open his own voting session
   - [x] hud - voting sessions are displayed in hud (message, time, vote state)
   - [x] a permissive vote - if player has permission fitting the command, session is lot easier to pass  
-  - [ ] /mute - mutes player for you
+  - [x] /mute - mutes player for you
   - [x] /maps - command can <change|restart|end> the map or display available maps 
   - [x] votekick - marks player griefer. After mark happens, anyone can kick player without a voting session
     - [x] hammer - hammer also works as votekick command, vanilla version is completely replaced
@@ -75,7 +75,7 @@ suggestion correctly, so I don't have to do it. (and I will not)
 - [x] bundle - plugin supports language bundles
 - [x] inspect - shows information about actions regarding tiles
 - [x] /loadout - stores resource for later and adds special ways to spend them
-  - [ ] /buildcore - build core from loadout resources
+  - [x] /buildcore - build core from loadout resources
   - [ ] /factory - build units from loadout resources and send them as backup
   - [ ] /boost - spend loadout resources on special boosts like building speed (not sure if it is possible)
     

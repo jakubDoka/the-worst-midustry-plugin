@@ -21,6 +21,7 @@ import java.lang.StringBuilder
 class Filter(val users: Users, val ranks: Ranks, val logger: Logger, val config: Config) {
     var map = LockMap()
     val inspect = Inspect(map, config, users, logger)
+    val banned = mutableMapOf<Tile, String>()
 
     fun init() {
         logger.on(EventType.PlayEvent::class.java) {
@@ -57,6 +58,12 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger, val config:
 
             if(it.tile == null) return@addActionFilter true
 
+            val banMessage = banned[it.tile]
+            if(banMessage != null) {
+                user.send("action.banned", user.data.translate(banMessage))
+                return@addActionFilter false
+            }
+
             if(!map.canInteract(it.tile, user)) {
                 user.send("action.interact", user.data.rank.control, Ranks.Control.Normal)
                 return@addActionFilter false
@@ -81,7 +88,7 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger, val config:
                 s = s.toLowerCase()
             }
 
-            if(!u.data.mutedForAll) users.sendUserMessage(u, message)
+            if(!u.data.mutedForAll) users.sendUserMessage(u, s)
             else u.send("mute.mutedForAll")
 
             return@addChatFilter null

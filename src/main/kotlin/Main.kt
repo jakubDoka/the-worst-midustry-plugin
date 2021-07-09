@@ -14,6 +14,7 @@ import mindustry_plugin_utils.Logger
 import java.io.File
 
 
+
 class Main : Plugin(), Reloadable {
     override val configPath = Globals.root + "config.json"
 
@@ -22,16 +23,18 @@ class Main : Plugin(), Reloadable {
     private val ranks = Ranks(Globals.root + "ranks/config.json")
     private val driver = Driver(Globals.root + "databaseDriver/config.json", ranks)
     private val users = Users(driver, logger, ranks, config)
+    private val filter = Filter(users, ranks, logger, config)
     private val voting = Voting(users)
     private val pets = Pets(users, logger, Globals.root + "pets/config.json")
     private val docks = Docks(users, logger, Globals.root + "docks/config.json")
     private val verificationTest = VerificationTest(ranks, users, config, Globals.root + "tests")
     private val loadout = Loadout(driver, docks, voting, Globals.root + "loadout/config.json")
-    private val buildcore = BuildCore(driver, docks, voting, Globals.root + "buildcore/config.json")
+    private val buildcore = BuildCore(driver, docks, voting, filter.banned, Globals.root + "buildcore/config.json")
     private val hud = Hud(users, arrayOf(voting, docks), logger)
 
 
-    private val filter = Filter(users, ranks, logger, config)
+
+
     private val reloadable = mutableMapOf(
         "main" to this,
         "driver" to driver,

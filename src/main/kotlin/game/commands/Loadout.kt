@@ -23,6 +23,10 @@ class Loadout(val driver: Driver, val docks: Docks, val voting: Voting, override
     val load = Voting.Session.Data(1, 5, "load", "loadout", Ranks.Perm.Load)
     var config = Config()
 
+    init {
+        reload()
+    }
+
     override fun run(args: Array<String>): Enum<*> {
         if(args.size == 3) {
             if(notNum(1, args)) {

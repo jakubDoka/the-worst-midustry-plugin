@@ -15,11 +15,14 @@ import mindustry.world.Tile
 import mindustry_plugin_utils.Fs
 import java.io.File
 
-class BuildCore(val driver: Driver, val docks: Docks, val voting: Voting, override val configPath: String) : Command("buildcore"), Reloadable, Globals.Log {
+class BuildCore(val driver: Driver, val docks: Docks, val voting: Voting, val banned: MutableMap<Tile, String>, override val configPath: String) : Command("buildcore"), Reloadable, Globals.Log {
     override val prefix = "buildcore"
     var config = Config()
     val build = Voting.Session.Data(1, 5, "build", "buildcore", Ranks.Perm.BuildCore)
-    val tiles = mutableSetOf<Tile>()
+
+    init {
+        reload()
+    }
 
     override fun run(args: Array<String>): Enum<*> {
         val user = user!!
@@ -44,14 +47,16 @@ class BuildCore(val driver: Driver, val docks: Docks, val voting: Voting, overri
         }
 
         var tile = user.inner.tileOn()
-        if(tile.build.block != Blocks.vault || tile.build.team != Team.sharded) {
+        if(tile.build?.block != Blocks.vault || tile.build.team != Team.sharded) {
             send("buildcore.missingVault")
             return Result.MissingVault
         }
         tile = tile.build.tile
 
         voting.add(Voting.Session(build, user, "${tile.x}:${tile.y}") {
-            docks.launch(CoreShip(tile, tiles, config.shipTravelTime))
+            banned[tile] = "buildcore.reservedTile"
+            docks.launch(CoreShip(tile, banned, config.shipTravelTime))
+            driver.items.take(config.costs)
         })
 
         return Generic.Success
@@ -67,10 +72,10 @@ class BuildCore(val driver: Driver, val docks: Docks, val voting: Voting, overri
         }
     }
 
-    class CoreShip(val tile: Tile, val tiles: MutableSet<Tile>, travelTime: Long): Docks.Ship(travelTime) {
+    class CoreShip(val tile: Tile, val tiles: MutableMap<Tile, String>, travelTime: Long): Docks.Ship(travelTime) {
         override fun execute(users: Users) {
             tiles.remove(tile)
-            if(tile.build.block != Blocks.vault || tile.build.team != Team.sharded) {
+            if(tile.build?.block != Blocks.vault || tile.build.team != Team.sharded) {
                 users.send("buildcore.fail")
                 return
             }

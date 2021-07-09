@@ -67,7 +67,7 @@ class Docks(val users: Users, logger: Logger, override val configPath: String) :
         }
 
         for(i in 0 until newShipsCount) {
-            launch(ReturningShip(config.rebuildTime))
+            launch(ReturningShip(config.returnTime))
         }
     }
 

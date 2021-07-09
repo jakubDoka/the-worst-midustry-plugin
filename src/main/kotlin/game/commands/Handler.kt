@@ -1,11 +1,13 @@
 package game.commands
 
 import arc.util.CommandHandler
+import arc.util.Time
 import bundle.Bundle
 import cfg.Config
 import game.Users
 import mindustry.gen.Player
 import mindustry_plugin_utils.Logger
+import mindustry_plugin_utils.Templates.time
 import java.lang.RuntimeException
 
 
@@ -27,6 +29,14 @@ class Handler(val users: Users, val logger: Logger, val config: Config, private 
                         p.sendMessage("[yellow] Please report that you saw this message. You cannot use command due to the bug in server.")
                         return@register
                     }
+
+                    val dif = user.data.commandRateLimit * 1000 - Time.millis() + user.data.lastCommand
+                    if(dif > 0 && !user.data.rank.control.admin()) {
+                        user.send("commandRateLimit", dif.time())
+                        return@register
+                    }
+
+                    user.data.lastCommand = Time.millis()
 
                     if (user.paralyzed && command.name != "account" && command.name != "help") {
                         user.send("paralyzed")

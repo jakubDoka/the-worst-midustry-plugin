@@ -21,10 +21,10 @@ import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
-import java.lang.Integer.max
 import java.sql.ResultSet
 import java.util.*
 import kotlin.collections.HashSet
+import kotlin.math.max
 
 // Driver handles all database calls and holds information about db structure
 class Driver(override val configPath: String = "config/driver.json", val ranks: Ranks = Ranks()): Reloadable {
@@ -250,6 +250,9 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
 
         val country = row?.get(Users.country) ?: "unknown"
         val bundle = Bundle(row?.get(Users.locale) ?: "en_US")
+
+        val commandRateLimit = 30 / ((stats.playTime / 1000 * 60 * 60) + 1) + 3
+        var lastCommand: Long = 0L
 
         init {
             if(!specials.contains(display.name) || rank.control.spectator()) {
@@ -608,20 +611,32 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
     }
 
     class ItemManager {
-        fun findMissing(items: Map<String, Long>): Map<String, Long> {
-            val missing = mutableMapOf<String, Long>()
+        fun take(items: Map<String, Long>) {
             transaction {
-                transaction {
-                    Items.selectAll().forEach {
-                        val name = it[Items.name]
-                        val amount = items[name] ?: return@forEach
-                        val missingAmount = amount - it[Items.amount]
-                        if(missingAmount > 0) {
-                            missing[name] = missingAmount
+                for((k, v) in items) {
+                    Items.update({ Items.name eq k }) {
+                        with(SqlExpressionBuilder) {
+                            it.update(amount, amount - v)
                         }
                     }
                 }
             }
+        }
+
+        fun findMissing(items: Map<String, Long>): Map<String, Long> {
+            val missing = mutableMapOf<String, Long>()
+
+            transaction {
+                Items.selectAll().forEach {
+                    val name = it[Items.name]
+                    val amount = items[name] ?: return@forEach
+                    val missingAmount = amount - it[Items.amount]
+                    if(missingAmount > 0) {
+                        missing[name] = missingAmount
+                    }
+                }
+            }
+
             return missing
         }
 
