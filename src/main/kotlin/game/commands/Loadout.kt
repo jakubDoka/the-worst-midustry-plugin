@@ -67,7 +67,9 @@ class Loadout(val driver: Driver, val docks: Docks, val voting: Voting, override
                         if(args[2].startsWith("where ")) {
                             args[2].substring("where ".length)
                         } else {
-                            if(Globals.itemList().find { it.name == args[2] } == null) {
+                            if(Globals.item(args[2]) == null) {
+                                send("loadout.invalidItem")
+                                send("loadout.suggestWhere")
                                 return Result.InvalidItem
                             }
                             "itemName == \"${args[2]}\""

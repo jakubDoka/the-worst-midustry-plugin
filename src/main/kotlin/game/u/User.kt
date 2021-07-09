@@ -10,7 +10,7 @@ import mindustry.gen.Player
 import mindustry.gen.Unit
 import mindustry_plugin_utils.Templates
 
-class User(val inner: Player, val data: Driver.RawUser) {
+class User(val inner: Player, val data: Driver.RawUser, previous: Driver.RawUser? = null) {
     companion object {
         val prefix = "[coral][[[scarlet]Server[]]:[#cbcbcb] "
     }
@@ -26,6 +26,7 @@ class User(val inner: Player, val data: Driver.RawUser) {
             inner.admin = data.rank.control.admin()
             data.ip = inner.con.address
             data.uuid = inner.uuid()
+            data.lastCommand = previous?.lastCommand ?: 0L
         }
     }
 

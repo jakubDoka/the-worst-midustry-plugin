@@ -88,7 +88,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
 
     fun reload(target: User) {
         save(target)
-        load(target.inner)
+        load(target.inner, target.data)
     }
 
     fun save(target: User) {
@@ -110,7 +110,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
         return u
     }
 
-    fun load(player: Player) {
+    fun load(player: Player, previous: Driver.RawUser? = null) {
         val existing = driver.users.search(player)
         val user = when (existing.size) {
             0 -> {
@@ -118,7 +118,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
                 runBlocking { vpn.input.send(u) }
                 u
             }
-            1 -> User(player, existing[0])
+            1 -> User(player, existing[0], previous)
             else -> {
                 val sb = StringBuffer()
                 for(e in existing) {

@@ -251,7 +251,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         val country = row?.get(Users.country) ?: "unknown"
         val bundle = Bundle(row?.get(Users.locale) ?: "en_US")
 
-        val commandRateLimit = 30 / ((stats.playTime / 1000 * 60 * 60) + 1) + 3
+        val commandRateLimit = 30 / ((stats.playTime / (1000 * 60 * 60)) + 1) + 3
         var lastCommand: Long = 0L
 
         init {
