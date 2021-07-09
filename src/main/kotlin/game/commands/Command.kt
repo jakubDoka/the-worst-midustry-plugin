@@ -12,16 +12,9 @@ import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Color
 import game.u.User
 import mindustry_plugin_utils.Templates
-import reactor.netty.http.client.HttpClient
 import java.io.File
-import java.lang.Double.parseDouble
 import java.lang.Long.parseLong
-import java.lang.RuntimeException
-import java.net.URI
-import java.net.URL
 import java.util.function.Consumer
-import java.util.regex.Pattern
-import kotlin.reflect.jvm.internal.impl.load.kotlin.JvmType
 
 // Command is a base class for all commands and implements some common utility
 abstract class Command(val name: String, val control: Ranks.Control = Ranks.Control.Minimal) {
@@ -193,6 +186,6 @@ abstract class Command(val name: String, val control: Ranks.Control = Ranks.Cont
     }
 
     enum class Generic {
-        Success, NotAInteger, Mismatch, NotEnough, NotFound, NotSupported, Denied, Vote, LoadFailed
+        Success, NotAInteger, Mismatch, NotEnough, NotFound, NotSupported, Denied, Vote, LoadFailed, NoFreeShips
     }
 }

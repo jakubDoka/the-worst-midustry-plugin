@@ -6,7 +6,6 @@ import com.beust.klaxon.Klaxon
 import db.Driver
 import db.Ranks
 import game.*
-import game.Loadout
 import game.commands.*
 import mindustry.game.EventType
 import mindustry.mod.Plugin
@@ -25,9 +24,10 @@ class Main : Plugin(), Reloadable {
     private val users = Users(driver, logger, ranks, config)
     private val voting = Voting(users)
     private val pets = Pets(users, logger, Globals.root + "pets/config.json")
-    private val loadout = Loadout(Globals.root + "loadout/data.json")
-    private val docks = Docks(Globals.root + "docks/config.json", users, logger)
-    private val verificationTest = VerificationTest(Globals.root + "tests", ranks, users, config)
+    private val docks = Docks(users, logger, Globals.root + "docks/config.json")
+    private val verificationTest = VerificationTest(ranks, users, config, Globals.root + "tests")
+    private val loadout = Loadout(driver, docks, voting, Globals.root + "loadout/config.json")
+    private val buildcore = BuildCore(driver, docks, voting, Globals.root + "buildcore/config.json")
     private val hud = Hud(users, arrayOf(voting, docks), logger)
 
 
@@ -37,9 +37,10 @@ class Main : Plugin(), Reloadable {
         "driver" to driver,
         "ranks" to ranks,
         "pets" to pets,
-        "loadout" to loadout,
         "docks" to docks,
-        "test" to verificationTest
+        "test" to verificationTest,
+        "loadout" to loadout,
+        "buildcore" to buildcore
     )
 
     private val game = Handler(users, logger, config, Command.Kind.Game)
@@ -104,8 +105,9 @@ class Main : Plugin(), Reloadable {
         game.reg(Spawn())
         game.reg(Maps(config, voting, driver))
         game.reg(MapManager(driver))
-        game.reg(LoadoutC(loadout, docks, voting))
+        game.reg(loadout)
         game.reg(Mute(driver, users))
+        game.reg(buildcore)
     }
 
     override fun registerServerCommands(handler: CommandHandler) {

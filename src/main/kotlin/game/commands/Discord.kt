@@ -10,7 +10,6 @@ import db.Quest
 import db.Ranks
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Message
-import discord4j.core.`object`.entity.User
 import discord4j.core.`object`.entity.channel.GuildChannel
 import discord4j.core.event.domain.message.MessageCreateEvent
 import game.Users

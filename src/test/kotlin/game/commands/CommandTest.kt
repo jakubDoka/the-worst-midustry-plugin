@@ -6,7 +6,6 @@ import cfg.Globals
 import db.Driver
 import db.Ranks
 import game.Docks
-import game.Loadout
 import game.Users
 import game.Voting
 import kotlinx.coroutines.delay
@@ -15,10 +14,6 @@ import mindustry.Vars
 import mindustry.content.Items
 import mindustry.core.ContentLoader
 import mindustry_plugin_utils.Logger
-import org.jetbrains.exposed.sql.checkExcessiveIndices
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -391,19 +386,19 @@ class CommandTest {
 
     @Test
     fun loadout() {
-        val l = LoadoutC(loadout, docks, voting)
+        val l = Loadout(loadout, docks, voting)
 
         l.user = users.test()
 
         l.assert(Command.Generic.Success, "status")
         l.assert(Command.Generic.NotAInteger, "store", "foo", "blue")
 
-        l.assert(LoadoutC.Result.Error, "store", "10", "where foo")
-        l.assert(LoadoutC.Result.InvalidItem, "store", "10", "itemName == \"coal\" and itemAmount < 30")
+        l.assert(Loadout.Result.Error, "store", "10", "where foo")
+        l.assert(Loadout.Result.InvalidItem, "store", "10", "itemName == \"coal\" and itemAmount < 30")
         l.assert(Command.Generic.Success, "store", "10", "coal")
         l.assert(Command.Generic.Success, "store", "10", "where itemName == \"coal\" and itemAmount < 30")
 
-        l.assert(LoadoutC.Result.Redundant, "load", "0", "coal")
+        l.assert(Loadout.Result.Redundant, "load", "0", "coal")
         l.assert(Command.Generic.Success, "load", "10", "coal")
     }
 

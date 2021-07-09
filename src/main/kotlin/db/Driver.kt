@@ -8,18 +8,20 @@ import cfg.Globals.ensure
 import cfg.Reloadable
 import com.beust.klaxon.Json
 import com.beust.klaxon.Klaxon
+import game.Interpreter
 import kotlinx.coroutines.runBlocking
 import mindustry.Vars
+import mindustry.game.Team
 import mindustry.gen.Player
-import mindustry_plugin_utils.Messenger
+import mindustry.type.Item
 import mindustry_plugin_utils.Fs
+import mindustry_plugin_utils.Messenger
 import mindustry_plugin_utils.Templates
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.lang.Integer.max
-import java.lang.RuntimeException
 import java.sql.ResultSet
 import java.util.*
 import kotlin.collections.HashSet
@@ -32,6 +34,7 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
     private val outlook = Lookout()
     val users = UserManager(ranks, outlook, this)
     val maps = MapManager()
+    val items = ItemManager()
 
     // loads the config and opens db connection
     init {
@@ -67,8 +70,8 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
 
     fun drop() {
         transaction {
-            if(Globals.testing) SchemaUtils.drop(Users, Bans, Progress, Maps)
-            SchemaUtils.create(Users, Bans, Progress, Maps)
+            if(Globals.testing) SchemaUtils.drop(Users, Bans, Progress, Maps, Items)
+            SchemaUtils.create(Users, Bans, Progress, Maps, Items)
             transaction {
                 exec("create index if not exists points on Users (points desc)")
             }
@@ -596,6 +599,90 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
 
         fun reload() {
             if(!Globals.testing) Vars.maps.reload()
+        }
+    }
+
+    object Items: Table() {
+        val name = text("name").uniqueIndex()
+        val amount = long("amount").default(0)
+    }
+
+    class ItemManager {
+        fun findMissing(items: Map<String, Long>): Map<String, Long> {
+            val missing = mutableMapOf<String, Long>()
+            transaction {
+                transaction {
+                    Items.selectAll().forEach {
+                        val name = it[Items.name]
+                        val amount = items[name] ?: return@forEach
+                        val missingAmount = amount - it[Items.amount]
+                        if(missingAmount > 0) {
+                            missing[name] = missingAmount
+                        }
+                    }
+                }
+            }
+            return missing
+        }
+
+        fun launch(condition: String, amount: Long) {
+            val core = Vars.state.teams.get(Team.sharded).core() ?: return
+
+            for(i in Globals.itemList()) {
+                val coreAmount = core.items.get(i).toLong()
+                if(Interpreter.run(condition, mapOf("itemName" to i.name, "itemAmount" to coreAmount)) as Boolean) {
+                    val toSend = java.lang.Long.min(amount, coreAmount)
+                    inc(i, toSend)
+                    core.items.remove(i, toSend.toInt())
+                }
+            }
+        }
+
+        fun value(item: Item): Long {
+            return transaction {
+                ensure(item)
+                Items.select { Items.name eq item.name }.first()[Items.amount]
+            }
+        }
+
+        fun dec(item: Item, delta: Long) {
+            inc(item, -delta)
+        }
+
+        fun inc(item: Item, delta: Long) {
+            transaction {
+                ensure(item)
+                Items.update({ Items.name eq item.name }) {
+                    with(SqlExpressionBuilder) {
+                        it.update(amount, amount + delta)
+                    }
+                }
+            }
+        }
+
+        fun format(): String {
+            val sb = java.lang.StringBuilder()
+
+            transaction {
+                Items.selectAll().forEach {
+                    sb
+                        .append(Globals.itemIcons[it[Items.name]]!!)
+                        .append(it[Items.amount])
+                        .append("\n")
+                }
+            }
+
+            return sb.toString()
+        }
+
+        fun ensure(item: Item) {
+            transaction {
+                if(Items.select { Items.name eq item.name }.empty()){
+                    Items.insert {
+                        it[name] = item.name
+                    }
+                }
+            }
         }
     }
 }

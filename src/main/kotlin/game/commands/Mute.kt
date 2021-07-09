@@ -17,10 +17,9 @@ class Mute(val driver: Driver, val users: Users): Command("mute") {
             return Generic.NotFound
         }
 
-        if(id == user.data.id) send("mute.self")
         if(args.size > 1) {
             if(user.data.rank.control.admin()) {
-                val value = driver.users.get(id, Driver.Users.mutedForAll)!!
+                val value = driver.users.get(id, Driver.Users.mutedForAll) ?: false
                 driver.users.set(id, Driver.Users.mutedForAll, !value)
 
                 if(value) send("mute.globallyAmplify")
@@ -28,7 +27,7 @@ class Mute(val driver: Driver, val users: Users): Command("mute") {
 
                 for(v in users.values) {
                     if(v.data.id == id) {
-                        user.data.mutedForAll = true
+                        v.data.mutedForAll = !value
                         users.reload(v)
                         break
                     }
@@ -42,6 +41,7 @@ class Mute(val driver: Driver, val users: Users): Command("mute") {
                 user.data.muted.remove(id)
                 send("mute.amplify")
             } else {
+                if(id == user.data.id) send("mute.self")
                 user.data.muted.add(id)
                 send("mute.mute")
             }

@@ -64,7 +64,7 @@ object Globals {
     }
 
     fun item(name: String): Item? {
-        return property(name, Items::class.java) as? Item?
+        return itemList().find { it.name == name }
     }
 
     fun property(name: String, target: Class<*>, obj: Any? = null): Any? {
@@ -114,5 +114,13 @@ object Globals {
 
     fun <V> downloadAttachment(url: String, fn: BiFunction<in HttpClientResponse, in ByteBufMono, out Mono<V>>): V {
         return HttpClient.create().get().uri(url).responseSingle(fn).block()!!
+    }
+
+    interface Log {
+        val prefix: String
+        fun <T> log(value: T) {
+            print("$prefix::")
+            println(value)
+        }
     }
 }

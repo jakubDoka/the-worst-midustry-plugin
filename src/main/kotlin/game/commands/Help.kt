@@ -1,19 +1,15 @@
 package game.commands
 
-import bundle.Bundle
 import db.Ranks
-import discord4j.rest.util.Color
 import mindustry_plugin_utils.Templates
-import java.lang.StringBuilder
-import kotlin.math.sign
 
-abstract class Help(val commands: Handler): Command("help", Ranks.Control.None) {
+abstract class Help(val commands: Handler) : Command("help", Ranks.Control.None) {
     val pageLen = 7
 
-    class Game(handler: Handler): Help(handler) {
+    class Game(handler: Handler) : Help(handler) {
         override fun run(args: Array<String>): Enum<*> {
             val user = user!!
-            val page = if(args.isEmpty()) "1" else args[0]
+            val page = if (args.isEmpty()) "1" else args[0]
             if (!notNum(0, page)) {
                 val arr = Array(commands.inner.commandList.size) {
                     val c = commands.inner.commandList[it]
@@ -35,7 +31,7 @@ abstract class Help(val commands: Handler): Command("help", Ranks.Control.None) 
         }
     }
 
-    class Discord(private val discord: game.commands.Discord, handler: Handler): Help(handler) {
+    class Discord(private val discord: game.commands.Discord, handler: Handler) : Help(handler) {
         override fun run(args: Array<String>): Enum<*> {
             if (args.isEmpty()) {
                 val sb = StringBuilder()
@@ -69,7 +65,6 @@ abstract class Help(val commands: Handler): Command("help", Ranks.Control.None) 
             return Result.Invalid
         }
     }
-
 
 
     enum class Result {

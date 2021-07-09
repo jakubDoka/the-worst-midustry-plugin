@@ -2,6 +2,7 @@ package game.commands
 
 import arc.util.Time
 import cfg.Config
+import cfg.Globals
 import cfg.Reloadable
 import com.beust.klaxon.Klaxon
 import db.Ranks
@@ -12,7 +13,8 @@ import java.io.File
 import java.util.*
 import kotlin.collections.HashMap
 
-class VerificationTest(override val configPath: String, val ranks: Ranks, val users: Users, val config: Config): Command("test"), Reloadable {
+class VerificationTest(val ranks: Ranks, val users: Users, val config: Config, override val configPath: String): Command("test"), Reloadable, Globals.Log {
+    override val prefix = "test"
     val questions = HashMap<String, Map<String, List<String>>>()
 
     val sessions = HashMap<Long, Session>()
@@ -60,6 +62,7 @@ class VerificationTest(override val configPath: String, val ranks: Ranks, val us
             if (questions.isNotEmpty()) return
         }
 
+        log("No tests found. Creating a new dummy test that should be removed as fast as possible.")
 
         Fs.createDefault(
             "$configPath/default.json", mapOf(
