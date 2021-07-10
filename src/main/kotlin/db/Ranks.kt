@@ -1,5 +1,6 @@
 package db
 
+import cfg.Globals
 import cfg.Reloadable
 import com.beust.klaxon.Json
 import com.beust.klaxon.JsonObject
@@ -11,8 +12,6 @@ import java.io.File
 
 // Ranks holds all game ranks that are used
 class Ranks(override val configPath: String = "config/ranks.json"): HashMap<String, Ranks.Rank>(), Reloadable {
-    private val messenger = Messenger("Ranks")
-
     override fun reload() {
         try {
             val ranks = Klaxon().parse<Map<String, JsonObject>>(File(configPath))!!
@@ -21,7 +20,7 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
             }
         } catch (e: Exception) {
             Fs.createDefault(configPath, this)
-            messenger.log("failed to load config file: ${e.message}")
+            Globals.loadFailMessage("ranks", e)
         }
 
         for((k, v) in this) {
@@ -180,6 +179,6 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
     }
 
     enum class Perm {
-        None, Skip, Scream, VoteKick, Maps, Store, Load, BuildCore
+        None, Skip, Scream, VoteKick, Maps, Store, Load, BuildCore, Boost
     }
 }

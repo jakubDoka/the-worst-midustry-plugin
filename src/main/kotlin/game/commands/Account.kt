@@ -1,11 +1,12 @@
 package game.commands
 
 import cfg.Config
+import cfg.Globals.time
 import db.Driver
 import db.Ranks
 import game.Users
 import mindustry_plugin_utils.Templates
-import mindustry_plugin_utils.Templates.time
+
 import org.apache.commons.codec.digest.DigestUtils
 import java.util.regex.Pattern
 

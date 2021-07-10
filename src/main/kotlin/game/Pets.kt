@@ -17,11 +17,10 @@ import mindustry.gen.Call
 import mindustry_plugin_utils.Fs
 import mindustry_plugin_utils.Logger
 import mindustry_plugin_utils.Messenger
+import rhino.GeneratedClassLoader
 import java.io.File
 
 class Pets(val users: Users, val logger: Logger, override val configPath: String): HashMap<String, Pets.Stats>(), Reloadable {
-    var messenger = Messenger("pets", verbose = true)
-
     private val dif = Vec2()
     private val vel = Vec2()
     private val playerPos = Vec2()
@@ -76,8 +75,7 @@ class Pets(val users: Users, val logger: Logger, override val configPath: String
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            messenger.log("cannot load the pets: ${e.message}")
-
+            Globals.loadFailMessage("pets", e)
             Fs.createDefault(configPath, mapOf(
                 "somePet" to Stats()
             ))

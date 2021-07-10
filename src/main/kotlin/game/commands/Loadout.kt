@@ -1,6 +1,7 @@
 package game.commands
 
 import cfg.Globals
+import cfg.Globals.time
 import cfg.Reloadable
 import com.beust.klaxon.Klaxon
 import db.Driver
@@ -105,7 +106,7 @@ class Loadout(val driver: Driver, val docks: Docks, val voting: Voting, override
             config = Klaxon().parse<Config>(File(configPath))!!
         } catch (e: Exception) {
             e.printStackTrace()
-            log("failed to load config")
+            Globals.loadFailMessage("loadout", e)
             Fs.createDefault(configPath, config)
         }
     }
@@ -133,7 +134,7 @@ class Loadout(val driver: Driver, val docks: Docks, val voting: Voting, override
                 .append(icon)
                 .append(amount)
                 .append(" >")
-                .append(Docks.formatShipTimer(timer))
+                .append(timer.time())
                 .append("> ")
                 .append(Globals.coreIcon)
                 .append(" ")

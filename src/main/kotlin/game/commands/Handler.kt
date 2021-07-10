@@ -4,10 +4,11 @@ import arc.util.CommandHandler
 import arc.util.Time
 import bundle.Bundle
 import cfg.Config
+import cfg.Globals.time
 import game.Users
 import mindustry.gen.Player
 import mindustry_plugin_utils.Logger
-import mindustry_plugin_utils.Templates.time
+
 import java.lang.RuntimeException
 
 

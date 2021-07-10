@@ -3,12 +3,13 @@ package game.commands
 import arc.util.Time
 import cfg.Config
 import cfg.Globals
+import cfg.Globals.time
 import cfg.Reloadable
 import com.beust.klaxon.Klaxon
 import db.Ranks
 import game.Users
 import mindustry_plugin_utils.Fs
-import mindustry_plugin_utils.Templates.time
+
 import java.io.File
 import java.util.*
 import kotlin.collections.HashMap
@@ -62,7 +63,7 @@ class VerificationTest(val ranks: Ranks, val users: Users, val config: Config, o
             if (questions.isNotEmpty()) return
         }
 
-        log("No tests found. Creating a new dummy test that should be removed as fast as possible.")
+        println("test:: No tests found. Creating a new dummy test that should be removed as fast as possible.")
 
         Fs.createDefault(
             "$configPath/default.json", mapOf(

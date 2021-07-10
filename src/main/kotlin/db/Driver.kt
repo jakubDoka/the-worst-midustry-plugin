@@ -28,8 +28,7 @@ import kotlin.math.max
 
 // Driver handles all database calls and holds information about db structure
 class Driver(override val configPath: String = "config/driver.json", val ranks: Ranks = Ranks()): Reloadable {
-    lateinit var config: Config
-    private lateinit var messenger: Messenger
+    var config = Config()
     private lateinit var con: Database
     private val outlook = Lookout()
     val users = UserManager(ranks, outlook, this)
@@ -51,19 +50,16 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
 
         try {
             config = Klaxon().parse<Config>(File(configPath))!!
-            initMessenger(config.verbose)
         } catch (e: Exception) {
-            initMessenger(false)
-            messenger.log("failed to load config")
-            messenger.verbose { e.printStackTrace() }
-            config = Config()
+            e.printStackTrace()
+            Globals.loadFailMessage("driver", e)
             Fs.createDefault(configPath, config)
         }
 
-        messenger.log("Connecting to database...")
+        println("driver:: connecting to database...")
         val url = String.format("jdbc:postgresql:%s", config.database)
         con = Database.connect(url, user = config.user, password = config.password)
-        messenger.log("Connected.")
+        println("driver:: connected")
 
         drop()
     }
@@ -76,10 +72,6 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
                 exec("create index if not exists points on Users (points desc)")
             }
         }
-    }
-
-    private fun initMessenger(verbose: Boolean) {
-        messenger = Messenger("DatabaseDriver", "enable verbose by adding '\"verbose\": true' to config", verbose)
     }
 
     // fmtRS formats ResultRow

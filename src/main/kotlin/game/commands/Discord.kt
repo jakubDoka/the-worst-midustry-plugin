@@ -26,8 +26,7 @@ import java.io.File
 
 class Discord(override val configPath: String = "config/discord.json", val logger: Logger, val driver: Driver, val users: Users, private val register: (Discord) -> Unit = {}): Reloadable {
     var handler: Handler? = null
-    lateinit var messenger: Messenger
-    lateinit var config: Config
+    var config = Config()
     val verificationQueue = HashMap<Long, CodeData>()
 
     init {
@@ -69,19 +68,14 @@ class Discord(override val configPath: String = "config/discord.json", val logge
 
         try {
             config = Klaxon().parse<Config>(File(configPath))!!
-            initMessenger(config.verbose)
         } catch (e: Exception) {
-            initMessenger(false)
-            messenger.log("failed to load config")
-            messenger.verbose {
-                e.printStackTrace()
-            }
-            config = Config()
+            e.printStackTrace()
+            Globals.loadFailMessage("bot", e)
             Fs.createDefault(configPath, config)
         }
 
         if(!config.disabled) {
-            messenger.log("Connecting...")
+            println("bot:: connecting...")
             handler = Handler(config.token, config.prefix, commandChannel = config.commandChannel, loadChannels = config.channels)
             register.invoke(this)
             for((k, v) in config.permissions) {
@@ -109,7 +103,7 @@ class Discord(override val configPath: String = "config/discord.json", val logge
                 }
             }
 
-            messenger.log("Connected.")
+            println("bot:: connected")
         }
     }
 
@@ -128,10 +122,6 @@ class Discord(override val configPath: String = "config/discord.json", val logge
         val ch = handler?.channels?.get(channel)
         if(ch != null) run(ch)
         return ch != null
-    }
-
-    private fun initMessenger(verbose: Boolean) {
-        messenger = Messenger("Discord", "enable verbose by adding '\"verbose\": true' to config", verbose)
     }
 
     fun reg(command: Command) {

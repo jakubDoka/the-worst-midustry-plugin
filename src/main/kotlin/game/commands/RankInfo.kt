@@ -1,8 +1,9 @@
 package game.commands
 
+import cfg.Globals.time
 import db.Quest
 import db.Ranks
-import mindustry_plugin_utils.Templates.time
+
 
 class RankInfo(private val ranks: Ranks, private val quests: Quest.Quests): Command("ranks") {
     override fun run(args: Array<String>): Enum<*> {

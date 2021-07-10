@@ -13,6 +13,14 @@ import java.util.function.BiFunction
 import mindustry.content.Fx
 import mindustry.content.Items
 import mindustry.type.Item
+import java.sql.Time
+import java.time.LocalDate
+import java.time.Period
+import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.jvm.internal.impl.load.kotlin.KotlinClassFinder
 
 // most of the content should be moved to utils
 object Globals {
@@ -20,6 +28,7 @@ object Globals {
     const val root = "config/mods/worst/"
     const val botRoot = root + "bot/"
     const val coreIcon = "\uF869"
+    const val hudDelimiter = "[gray]|[]"
 
 
     // the magic it self
@@ -41,6 +50,10 @@ object Globals {
         "pyratite" to "\uf829" ,
         "metaglass" to "\uf836" ,
     )
+
+    fun loadFailMessage(source: String, e: Throwable) {
+        println("$source:: failed to load the config file: ${e.message}")
+    }
 
     fun File.ensure() {
         if(!exists()) {
@@ -114,6 +127,41 @@ object Globals {
 
     fun <V> downloadAttachment(url: String, fn: BiFunction<in HttpClientResponse, in ByteBufMono, out Mono<V>>): V {
         return HttpClient.create().get().uri(url).responseSingle(fn).block()!!
+    }
+
+    fun KClass<*>.property(name: String): KProperty1<out Any, *>? {
+        for(p in declaredMemberProperties) {
+            if(p.name.equals(name, ignoreCase = true)) {
+                return p
+            }
+        }
+
+        return null
+    }
+
+    val timeUnitSuffixes = listOf("y", "d", "h", "m", "s")
+
+    // i know this is inaccurate as fuck, but i also do not care
+    fun Long.time(): String {
+        val amounts = listOf(
+            (this / (1000 * 60 * 60 * 24 * 365L)),
+            (this / (1000 * 60 * 60 * 24L)) % 365,
+            (this / (1000 * 60 * 60L)) % 24,
+            (this / (1000 * 60L)) % 60,
+            (this / 1000L) % 60,
+        )
+
+        val sb = StringBuilder()
+        for(i in amounts.indices) {
+            val amount = amounts[i]
+            if(amount != 0L) {
+                sb
+                    .append(amount)
+                    .append(timeUnitSuffixes[i])
+            }
+        }
+
+        return sb.toString()
     }
 
     interface Log {

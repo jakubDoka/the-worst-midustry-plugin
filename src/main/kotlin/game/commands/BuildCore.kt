@@ -1,6 +1,7 @@
 package game.commands
 
 import cfg.Globals
+import cfg.Globals.time
 import cfg.Reloadable
 import com.beust.klaxon.Klaxon
 import db.Driver
@@ -67,7 +68,7 @@ class BuildCore(val driver: Driver, val docks: Docks, val voting: Voting, val ba
             config = Klaxon().parse<Config>(File(configPath))!!
         } catch (e: Exception) {
             e.printStackTrace()
-            log("failed to load core costs")
+            Globals.loadFailMessage("buildcore", e)
             Fs.createDefault(configPath, config)
         }
     }
@@ -89,7 +90,7 @@ class BuildCore(val driver: Driver, val docks: Docks, val voting: Voting, val ba
             sb
                 .append(Globals.coreIcon)
                 .append(" >")
-                .append(Docks.formatShipTimer(timer))
+                .append(timer.time())
                 .append("> ")
                 .append(tile.x)
                 .append(":")

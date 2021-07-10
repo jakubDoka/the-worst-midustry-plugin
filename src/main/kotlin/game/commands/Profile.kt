@@ -1,11 +1,12 @@
 package game.commands
 
 import bundle.Bundle
+import cfg.Globals.time
 import db.Driver
 import db.Ranks
 import discord4j.rest.util.Color
 import game.Users
-import mindustry_plugin_utils.Templates.time
+
 import mindustry_plugin_utils.Fs.jsonToString
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction

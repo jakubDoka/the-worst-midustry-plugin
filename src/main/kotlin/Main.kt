@@ -8,11 +8,12 @@ import db.Ranks
 import game.*
 import game.commands.*
 import mindustry.game.EventType
+import mindustry.game.Rules
 import mindustry.mod.Plugin
 import mindustry_plugin_utils.Fs
 import mindustry_plugin_utils.Logger
 import java.io.File
-
+import java.lang.StringBuilder
 
 
 class Main : Plugin(), Reloadable {
@@ -30,7 +31,8 @@ class Main : Plugin(), Reloadable {
     private val verificationTest = VerificationTest(ranks, users, config, Globals.root + "tests")
     private val loadout = Loadout(driver, docks, voting, Globals.root + "loadout/config.json")
     private val buildcore = BuildCore(driver, docks, voting, filter.banned, Globals.root + "buildcore/config.json")
-    private val hud = Hud(users, arrayOf(voting, docks), logger)
+    private val boost = Boost(driver, voting, logger, Globals.root + "boost/config.json")
+    private val hud = Hud(users, arrayOf(voting, docks, boost), logger)
 
 
 
@@ -43,7 +45,8 @@ class Main : Plugin(), Reloadable {
         "docks" to docks,
         "test" to verificationTest,
         "loadout" to loadout,
-        "buildcore" to buildcore
+        "buildcore" to buildcore,
+        "boost" to boost,
     )
 
     private val game = Handler(users, logger, config, Command.Kind.Game)
@@ -80,6 +83,10 @@ class Main : Plugin(), Reloadable {
                 it.restChannel.createMessage(Globals.discordMessage(user.data.idName(), e.message)).block()
             }
         }
+
+        logger.on(EventType.ServerLoadEvent::class.java) {
+            boost.reload()
+        }
     }
 
     override fun init() {
@@ -111,6 +118,7 @@ class Main : Plugin(), Reloadable {
         game.reg(loadout)
         game.reg(Mute(driver, users))
         game.reg(buildcore)
+        game.reg(boost)
     }
 
     override fun registerServerCommands(handler: CommandHandler) {
@@ -126,6 +134,7 @@ class Main : Plugin(), Reloadable {
         terminal.reg(RankInfo(ranks, users.quests))
         terminal.reg(MapManager(driver))
         terminal.reg(Maps(config, voting, driver))
+        terminal.reg(boost)
     }
 
     private fun bulkRemove(handler: CommandHandler, toRemove: String) {

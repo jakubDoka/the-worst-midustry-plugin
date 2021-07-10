@@ -1,6 +1,7 @@
 package game
 
 import cfg.Globals
+import cfg.Globals.time
 import cfg.Reloadable
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
@@ -16,6 +17,7 @@ import mindustry_plugin_utils.Messenger
 import java.io.File
 import java.lang.Long.min
 import java.lang.StringBuilder
+import kotlin.math.max
 
 class Docks(val users: Users, logger: Logger, override val configPath: String) : Displayable, Reloadable {
     private val ships = mutableListOf<Ship>()
@@ -75,8 +77,9 @@ class Docks(val users: Users, logger: Logger, override val configPath: String) :
         val sb = StringBuilder()
         for(s in ships) {
             s.display(sb)
+            sb.append(Globals.hudDelimiter)
         }
-        return sb.toString()
+        return sb.substring(0, max(0, sb.length - Globals.hudDelimiter.length))
     }
 
     override fun reload() {
@@ -101,13 +104,13 @@ class Docks(val users: Users, logger: Logger, override val configPath: String) :
 
     class ReturningShip(travelTime: Long): Ship(travelTime, true) {
         override fun display(sb: StringBuilder) {
-            sb.append("returning ").append(formatShipTimer(timer))
+            sb.append("returning ").append(timer.time())
         }
     }
 
     class BuildingShip(travelTime: Long): Ship(travelTime, true) {
         override fun display(sb: StringBuilder) {
-            sb.append("building new ship ").append(formatShipTimer(timer))
+            sb.append("building new ship ").append(timer.time())
         }
     }
 
@@ -125,10 +128,4 @@ class Docks(val users: Users, logger: Logger, override val configPath: String) :
         val shipCount: Int = 3,
         val rebuildTime: Long = 60 * 60,
     )
-
-    companion object {
-        fun formatShipTimer(l: Long): String {
-            return "${l / 60}:${l % 60}"
-        }
-    }
 }

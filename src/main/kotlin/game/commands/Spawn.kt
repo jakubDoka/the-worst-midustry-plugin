@@ -2,7 +2,8 @@ package game.commands
 
 import arc.util.Time
 import cfg.Globals
-import mindustry_plugin_utils.Templates.time
+import cfg.Globals.time
+
 
 class Spawn: Command("spawn") {
     override fun run(args: Array<String>): Enum<*> {
