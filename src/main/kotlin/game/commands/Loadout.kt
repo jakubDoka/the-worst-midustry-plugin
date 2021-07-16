@@ -134,7 +134,7 @@ class Loadout(val driver: Driver, val docks: Docks, val voting: Voting, override
                 .append(icon)
                 .append(amount)
                 .append(" >")
-                .append(timer.time())
+                .append(timer.times(1000).time())
                 .append("> ")
                 .append(Globals.coreIcon)
                 .append(" ")

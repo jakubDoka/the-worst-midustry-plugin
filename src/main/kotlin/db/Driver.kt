@@ -380,11 +380,14 @@ class Driver(override val configPath: String = "config/driver.json", val ranks: 
         val locale = text("locale").default(defaultLocale)
 
         val points = long("points").index().default(0)
+
+        val credits = long("credits").default(0)
+        val webToken = text("webToken").default("")
     }
 
     // Bas is definition of bans table (Exposed framework macro)
     object Bans: Table() {
-        val value  = text("value").uniqueIndex()
+        val value = text("value").uniqueIndex()
         override val primaryKey = PrimaryKey(value)
     }
 

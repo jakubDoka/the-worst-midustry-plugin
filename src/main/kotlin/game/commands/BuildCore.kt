@@ -90,7 +90,7 @@ class BuildCore(val driver: Driver, val docks: Docks, val voting: Voting, val ba
             sb
                 .append(Globals.coreIcon)
                 .append(" >")
-                .append(timer.time())
+                .append(timer.times(1000).time())
                 .append("> ")
                 .append(tile.x)
                 .append(":")

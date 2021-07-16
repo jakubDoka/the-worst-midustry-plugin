@@ -26,11 +26,7 @@ class Boost(val driver: Driver, val voting: Voting, val logger: Logger, override
 
     init {
         logger.on(EventType.GameOverEvent::class.java) {
-            val iter = active.iterator()
-            while(iter.hasNext()) {
-                iter.next().undo()
-                iter.remove()
-            }
+            active.clear()
         }
     }
 
@@ -75,7 +71,7 @@ class Boost(val driver: Driver, val voting: Voting, val logger: Logger, override
                 apply(it.key, it.value)
             }.toMap(), booster.duration))
             driver.items.take(booster.cost)
-            Call.setRules(Vars.state.rules.copy())
+            Call.setRules(Vars.state.rules)
         })
 
         return Generic.Success
@@ -128,7 +124,7 @@ class Boost(val driver: Driver, val voting: Voting, val logger: Logger, override
             if(current.timer <= 0L) {
                 current.undo()
                 it.remove()
-                Call.setRules(Vars.state.rules.copy())
+                Call.setRules(Vars.state.rules)
             }
         }
     }
@@ -174,7 +170,9 @@ class Boost(val driver: Driver, val voting: Voting, val logger: Logger, override
     class Booster(val data: Data, val undo: Map<String, Float>, var timer: Long) {
         fun undo() {
             for((k, v) in undo) {
-                Rules::class.java.getField(k).setFloat(Vars.state.rules, v)
+                val field = Rules::class.java.getField(k)
+                val value = field.getFloat(Vars.state.rules)
+                field.setFloat(Vars.state.rules, value / v)
             }
         }
     }

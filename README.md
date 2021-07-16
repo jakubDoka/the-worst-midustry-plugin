@@ -78,12 +78,6 @@ suggestion correctly, so I don't have to do it. (and I will not)
   - [x] /buildcore - build core from loadout resources
   - [ ] /factory - build units from loadout resources and send them as backup
   - [x] /boost - spend loadout resources on special boosts like building speed (not sure if it is possible)
-    
-# Documentation
-
-## configurations
-
-### ranks
 
 
     

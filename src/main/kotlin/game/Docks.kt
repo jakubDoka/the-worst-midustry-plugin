@@ -104,13 +104,13 @@ class Docks(val users: Users, logger: Logger, override val configPath: String) :
 
     class ReturningShip(travelTime: Long): Ship(travelTime, true) {
         override fun display(sb: StringBuilder) {
-            sb.append("returning ").append(timer.time())
+            sb.append("returning ").append(timer.times(1000).time())
         }
     }
 
     class BuildingShip(travelTime: Long): Ship(travelTime, true) {
         override fun display(sb: StringBuilder) {
-            sb.append("building new ship ").append(timer.time())
+            sb.append("building new ship ").append(timer.times(1000).time())
         }
     }
 
