@@ -27,18 +27,13 @@ import kotlin.collections.HashSet
 import kotlin.math.max
 
 // Driver handles all database calls and holds information about db structure
-class Driver(override val configPath: String = "config/driver.json", val ranks: Ranks = Ranks()): Reloadable {
+class Driver(override var configPath: String = "config/driver.json", val ranks: Ranks = Ranks()): Reloadable {
     var config = Config()
     private lateinit var con: Database
     private val outlook = Lookout()
     val users = UserManager(ranks, outlook, this)
     val maps = MapManager()
     val items = ItemManager()
-
-    // loads the config and opens db connection
-    init {
-        reload()
-    }
 
     override fun reload() {
         if(this::con.isInitialized) {

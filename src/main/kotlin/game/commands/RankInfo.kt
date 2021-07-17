@@ -51,6 +51,7 @@ class RankInfo(private val ranks: Ranks, private val quests: Quest.Quests): Comm
                         rank.kind,
                         rank.unit,
                         rank.unitRecharge.time(),
+                        rank.voteValue,
                         rank.description[bundle.locale]
                             ?: rank.description["default"]
                             ?: bundle.translate("noDescription"),

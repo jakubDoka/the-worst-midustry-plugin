@@ -15,7 +15,7 @@ import kotlin.reflect.full.declaredMemberProperties
 
 abstract class Quest(val name: String, val permanent: Boolean = true) {
     companion object {
-        const val complete = "c"
+        const val complete = "complete"
     }
 
     fun points(amount: Long, user: Driver.RawUser): String {

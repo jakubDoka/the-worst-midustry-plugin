@@ -20,7 +20,7 @@ import mindustry_plugin_utils.Messenger
 import rhino.GeneratedClassLoader
 import java.io.File
 
-class Pets(val users: Users, val logger: Logger, override val configPath: String): HashMap<String, Pets.Stats>(), Reloadable {
+class Pets(val users: Users, val logger: Logger, override var configPath: String): HashMap<String, Pets.Stats>(), Reloadable {
     private val dif = Vec2()
     private val vel = Vec2()
     private val playerPos = Vec2()
@@ -30,7 +30,6 @@ class Pets(val users: Users, val logger: Logger, override val configPath: String
         logger.run(EventType.Trigger.update) {
             for ((_, u) in users) update(u)
         }
-        reload()
     }
 
     fun update(user: User) {

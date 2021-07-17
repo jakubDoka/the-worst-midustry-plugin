@@ -12,5 +12,6 @@ class Config(var data: Data = Data()) {
         var vpnApyKey: String = "",
         var gamemode: Gamemode = Gamemode.survival,
         val doubleTapSensitivity: Long = 300,
+        val configPaths: Map<String, String> = mapOf(),
     )
 }

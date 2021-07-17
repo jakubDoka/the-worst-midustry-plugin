@@ -21,18 +21,19 @@ import java.io.File
 class CommandTest {
     init { Globals.testing = true }
     private val config = Config(data = Config.Data(vpnApyKey = "e28a8957c617446da4f8c4297efd80ae"))
-    private val driver = Driver()
     private val ranks = Ranks()
+    private val driver = Driver(ranks = ranks)
     private val logger = Logger("config/logger.json")
     private val users = Users(driver, logger, ranks, config)
     private val handler = Handler(users, logger, config, Command.Kind.Game)
     private val discord = Discord(logger = logger, driver = driver, users = users)
     private val voting = Voting(users)
-    private val loadout = Loadout("config/items.json")
-    private val docks = Docks("config/docks.json", users, logger)
+    private val docks = Docks(users, logger, "config/docks.json")
 
 
     init {
+        driver.reload()
+        ranks.reload()
         Vars.content = ContentLoader()
         Items().load()
 
@@ -62,7 +63,7 @@ class CommandTest {
             "rankCount" to 10,
             "rankTotalValue" to 20,
             "points" to 40,
-            "roles" to "k f m",
+            "roles" to "k;f;m",
         ), kind = Ranks.Kind.Special)
         ranks["everything"]!!.name = "everything"
     }
@@ -113,8 +114,6 @@ class CommandTest {
 
         c.kind = Command.Kind.Game
         c.user = users.test()
-        c.assert(Command.Generic.Denied, "")
-        c.user!!.data.rank = Ranks()["dev"]!!
         c.assert(Command.Generic.Success, "select * from users")
         c.assert(Execute.Result.Failed, "hey db how are you?")
     }
@@ -127,8 +126,6 @@ class CommandTest {
         s.kind = Command.Kind.Game
         s.user = users.test()
 
-        s.assert(Command.Generic.Denied, "ab", "something")
-        s.user!!.data.rank = ranks.admin
         s.assert(Command.Generic.NotAInteger, "ab", "something")
         s.assert(Command.Generic.NotFound, "10", "something")
         s.assert(SetRank.Result.InvalidRank, "1", "something")
@@ -143,10 +140,6 @@ class CommandTest {
         val s = Account(driver, users, discord, config, ranks)
         s.kind = Command.Kind.Game
         s.user = users.test()
-
-        s.user!!.data.rank = ranks.griefer
-        s.assert(Command.Generic.Denied, "password", "h")
-        s.user!!.data.rank = ranks.default
 
         s.assert(Account.Result.Complain, "password", "9")
         s.assert(Account.Result.Complain, "password", "a")
@@ -221,8 +214,6 @@ class CommandTest {
         ))
         c.user = users.test()
 
-        c.assert(Command.Generic.Denied, "hell")
-        c.user!!.data.rank = ranks["dev"]!!
         c.assert(Configure.Result.Unknown, "hell")
         c.assert(Configure.Result.View, "bot", "view")
         c.assert(Configure.Result.Reload, "bot", "reload")
@@ -304,14 +295,16 @@ class CommandTest {
         l.user = users.test()
 
         l.assert(RankInfo.Result.All, "all")
-        l.assert(Command.Generic.NotFound, "rank", "fiction")
-        l.assert(Command.Generic.Success, "rank", "everything")
+        l.assert(Command.Generic.NotFound, "fiction")
+        for (k in ranks) println(k)
+        l.assert(Command.Generic.Success, "everything")
     }
 
     @Test
     fun verificationTest() {
         assert(File("config/tests").deleteRecursively())
-        val t = VerificationTest("config/tests", ranks, users, config)
+        val t = VerificationTest(ranks, users, config, "config/tests")
+        t.reload()
         t.user = users.test()
 
         t.assert(VerificationTest.Result.Unavailable)
@@ -386,7 +379,7 @@ class CommandTest {
 
     @Test
     fun loadout() {
-        val l = Loadout(loadout, docks, voting)
+        val l = Loadout(driver, docks, voting, "config/loadout.json")
 
         l.user = users.test()
 

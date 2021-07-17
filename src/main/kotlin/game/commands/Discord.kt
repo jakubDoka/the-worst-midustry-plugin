@@ -24,7 +24,7 @@ import mindustry_plugin_utils.Templates
 import mindustry_plugin_utils.discord.Handler
 import java.io.File
 
-class Discord(override val configPath: String = "config/discord.json", val logger: Logger, val driver: Driver, val users: Users, private val register: (Discord) -> Unit = {}): Reloadable {
+class Discord(override var configPath: String = "config/discord.json", val logger: Logger, val driver: Driver, val users: Users, private val register: (Discord) -> Unit = {}): Reloadable {
     var handler: Handler? = null
     var config = Config()
     val verificationQueue = HashMap<Long, CodeData>()
@@ -54,7 +54,6 @@ class Discord(override val configPath: String = "config/discord.json", val logge
                 return complete
             }
         })
-        reload()
     }
 
     fun getServerID(): Snowflake? {

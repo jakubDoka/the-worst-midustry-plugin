@@ -93,9 +93,8 @@ object Globals {
     private lateinit var itemString: String
     fun listItems(): String {
         if(!this::itemString.isInitialized) {
-            itemString = Items::class.java.declaredFields.joinTo(StringBuilder(), "") {
-                val item = item(it.name)!!
-                "[#${item.color}]${item.name}[]"
+            itemString = itemList().joinTo(StringBuilder(), "") {
+                "[#${it.color}]${it.name}[]"
             }.toString()
         }
         return itemString

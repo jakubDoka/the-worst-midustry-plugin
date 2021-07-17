@@ -17,7 +17,7 @@ import java.lang.StringBuilder
 
 
 class Main : Plugin(), Reloadable {
-    override val configPath = Globals.root + "config.json"
+    override var configPath = Globals.root + "config.json"
 
     private val config = Config()
     private val logger = Logger(Globals.root + "logger/config.json")
@@ -34,9 +34,6 @@ class Main : Plugin(), Reloadable {
     private val boost = Boost(driver, voting, logger, Globals.root + "boost/config.json")
     private val hud = Hud(users, arrayOf(voting, docks, boost), logger)
 
-
-
-
     private val reloadable = mutableMapOf(
         "main" to this,
         "driver" to driver,
@@ -48,6 +45,17 @@ class Main : Plugin(), Reloadable {
         "buildcore" to buildcore,
         "boost" to boost,
     )
+
+    init {
+        for((k, v) in reloadable) {
+            val path = config.data.configPaths[k];
+            if (path != null) {
+                v.configPath = path
+            }
+            if(k == "boost") continue
+            v.reload()
+        }
+    }
 
     private val game = Handler(users, logger, config, Command.Kind.Game)
     private val terminal = Handler(users, logger, config, Command.Kind.Cmd)
@@ -75,7 +83,6 @@ class Main : Plugin(), Reloadable {
     }
 
     init {
-        reload()
         logger.on(EventType.PlayerChatEvent::class.java) { e ->
             discord.with("chat") {
                 if(e.message.startsWith("/")) return@with

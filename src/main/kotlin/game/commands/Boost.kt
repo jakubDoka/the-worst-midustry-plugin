@@ -19,7 +19,7 @@ import java.io.File
 import java.lang.Integer.max
 import java.lang.StringBuilder
 
-class Boost(val driver: Driver, val voting: Voting, val logger: Logger, override val configPath: String) : Command("boost"), Reloadable, Displayable {
+class Boost(val driver: Driver, val voting: Voting, val logger: Logger, override var configPath: String) : Command("boost"), Reloadable, Displayable {
     val create = Voting.Session.Data(1, 5, "create", "boost", Ranks.Perm.Boost)
     val active = mutableListOf<Booster>()
     var config = mutableMapOf<String, Data>()
@@ -89,6 +89,7 @@ class Boost(val driver: Driver, val voting: Voting, val logger: Logger, override
                 for (i in v.effects.keys) {
                     val msg = verify(k, i)
                     if(msg != "ok") notOk = true
+                    else continue
                     println(msg)
                 }
             }

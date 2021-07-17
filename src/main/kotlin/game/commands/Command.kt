@@ -88,7 +88,9 @@ abstract class Command(val name: String, val control: Ranks.Control = Ranks.Cont
 
     // generic send method base dof current command kind
     fun send(key: String, vararg args: Any) {
-        when(kind) {
+        if(Globals.testing)
+            Bundle.send(key, *args)
+        else when(kind) {
             Kind.Discord -> dm.send(key, *args)
             Kind.Game -> user!!.send(key, *args)
             Kind.Cmd -> Bundle.send(key, *args)
@@ -96,14 +98,18 @@ abstract class Command(val name: String, val control: Ranks.Control = Ranks.Cont
     }
 
     fun alert(titleKey: String, bodyKey: String, vararg args: Any) {
-        when(kind) {
+        if(Globals.testing)
+            dm.alert(titleKey, bodyKey, *args)
+        else when(kind) {
             Kind.Game -> user!!.alert(titleKey, bodyKey, *args)
             else -> dm.alert(titleKey, bodyKey, *args)
         }
     }
 
     fun alertPlain(text: String) {
-        when(kind) {
+        if(Globals.testing)
+            dm.alertPlain(text)
+        else when(kind) {
             Kind.Game -> user!!.alert(text)
             else -> dm.alertPlain(text)
         }
@@ -171,13 +177,14 @@ abstract class Command(val name: String, val control: Ranks.Control = Ranks.Cont
             if(command.message == null) {
                 val e = EmbedCreateSpec()
                 embed.accept(e)
-                println(e.asRequest().title().get())
+                if(!e.asRequest().title().isAbsent)
+                    println(e.asRequest().title())
                 println(e.asRequest().description().get())
             } else command.message!!.channel.block()?.createEmbed(embed)?.block()
         }
 
         fun clean(message: String): String {
-            return Templates.colorR.matcher(message).replaceAll("**")
+            return Templates.colorR.matcher(message).replaceAll("")
         }
     }
 

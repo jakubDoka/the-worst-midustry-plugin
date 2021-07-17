@@ -16,14 +16,10 @@ import mindustry.world.Tile
 import mindustry_plugin_utils.Fs
 import java.io.File
 
-class BuildCore(val driver: Driver, val docks: Docks, val voting: Voting, val banned: MutableMap<Tile, String>, override val configPath: String) : Command("buildcore"), Reloadable, Globals.Log {
+class BuildCore(val driver: Driver, val docks: Docks, val voting: Voting, val banned: MutableMap<Tile, String>, override var configPath: String) : Command("buildcore"), Reloadable, Globals.Log {
     override val prefix = "buildcore"
     var config = Config()
     val build = Voting.Session.Data(1, 5, "build", "buildcore", Ranks.Perm.BuildCore)
-
-    init {
-        reload()
-    }
 
     override fun run(args: Array<String>): Enum<*> {
         val user = user!!

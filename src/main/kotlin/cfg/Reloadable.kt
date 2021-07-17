@@ -6,7 +6,7 @@ import java.io.File
 
 interface Reloadable {
     fun reload()
-    val configPath: String
+    var configPath: String
 
     val view get() = try {
         File(configPath).readText()

@@ -19,7 +19,7 @@ import java.lang.Long.min
 import java.lang.StringBuilder
 import kotlin.math.max
 
-class Docks(val users: Users, logger: Logger, override val configPath: String) : Displayable, Reloadable {
+class Docks(val users: Users, logger: Logger, override var configPath: String) : Displayable, Reloadable {
     private val ships = mutableListOf<Ship>()
     var config = Config()
 
@@ -33,7 +33,6 @@ class Docks(val users: Users, logger: Logger, override val configPath: String) :
             for(i in 0 until prev - ships.size) launch(BuildingShip(config.rebuildTime))
             if(prev - ships.size != 0) users.send("docks.destroyed")
         }
-        reload()
     }
 
     fun canShip(): Boolean {

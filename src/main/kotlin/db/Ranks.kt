@@ -11,7 +11,7 @@ import mindustry_plugin_utils.Templates
 import java.io.File
 
 // Ranks holds all game ranks that are used
-class Ranks(override val configPath: String = "config/ranks.json"): HashMap<String, Ranks.Rank>(), Reloadable {
+class Ranks(override var configPath: String = "config/ranks.json"): HashMap<String, Ranks.Rank>(), Reloadable {
     override fun reload() {
         try {
             val ranks = Klaxon().parse<Map<String, JsonObject>>(File(configPath))!!
@@ -102,7 +102,6 @@ class Ranks(override val configPath: String = "config/ranks.json"): HashMap<Stri
                 "default" to "Person who pays all the bills for the server. The most p2w rank there is."
             )
         ))
-        reload()
     }
 
     val default get() = get(Driver.Users.defaultRank)!!

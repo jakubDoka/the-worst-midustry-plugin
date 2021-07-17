@@ -14,16 +14,12 @@ import java.io.File
 import java.util.*
 import kotlin.collections.HashMap
 
-class VerificationTest(val ranks: Ranks, val users: Users, val config: Config, override val configPath: String): Command("test"), Reloadable, Globals.Log {
+class VerificationTest(val ranks: Ranks, val users: Users, val config: Config, override var configPath: String): Command("test"), Reloadable, Globals.Log {
     override val prefix = "test"
     val questions = HashMap<String, Map<String, List<String>>>()
 
     val sessions = HashMap<Long, Session>()
     val penalties = HashMap<Long, Long>()
-
-    init {
-        reload()
-    }
 
     override fun run(args: Array<String>): Enum<*> {
         val data = data!!

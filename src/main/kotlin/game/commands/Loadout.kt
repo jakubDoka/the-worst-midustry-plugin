@@ -18,15 +18,11 @@ import java.io.File
 import java.lang.Exception
 import java.lang.Long.min
 
-class Loadout(val driver: Driver, val docks: Docks, val voting: Voting, override val configPath: String): Command("loadout"), Reloadable, Globals.Log {
+class Loadout(val driver: Driver, val docks: Docks, val voting: Voting, override var configPath: String): Command("loadout"), Reloadable, Globals.Log {
     override val prefix = "loadout"
     val store = Voting.Session.Data(1, 5, "store", "loadout", Ranks.Perm.Store)
     val load = Voting.Session.Data(1, 5, "load", "loadout", Ranks.Perm.Load)
     var config = Config()
-
-    init {
-        reload()
-    }
 
     override fun run(args: Array<String>): Enum<*> {
         if(args.size == 3) {
@@ -69,7 +65,7 @@ class Loadout(val driver: Driver, val docks: Docks, val voting: Voting, override
                             args[2].substring("where ".length)
                         } else {
                             if(Globals.item(args[2]) == null) {
-                                send("loadout.invalidItem")
+                                send("loadout.invalidItem", Globals.listItems())
                                 send("loadout.suggestWhere")
                                 return Result.InvalidItem
                             }
