@@ -46,17 +46,6 @@ class Main : Plugin(), Reloadable {
         "boost" to boost,
     )
 
-    init {
-        for((k, v) in reloadable) {
-            val path = config.data.configPaths[k];
-            if (path != null) {
-                v.configPath = path
-            }
-            if(k == "boost") continue
-            v.reload()
-        }
-    }
-
     private val game = Handler(users, logger, config, Command.Kind.Game)
     private val terminal = Handler(users, logger, config, Command.Kind.Cmd)
 
@@ -75,7 +64,16 @@ class Main : Plugin(), Reloadable {
 
     override fun reload() {
         config.data = try {
-            Klaxon().parse(File(configPath))!!
+            val cfg = Klaxon().parse<Config.Data>(File(configPath))!!
+            for((k, v) in reloadable) {
+                val path = config.data.configPaths[k];
+                if (path != null) {
+                    v.configPath = path
+                }
+                if(k == "boost") continue
+                v.reload()
+            }
+            cfg
         } catch(e: Exception) {
             Fs.createDefault(configPath, Config.Data())
             Config.Data()

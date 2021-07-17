@@ -80,6 +80,27 @@ suggestion correctly, so I don't have to do it. (and I will not)
     
 # documentation
 
+## worst/config.json
+
+```json
+{
+  "configPaths": {},
+  "disabledGameCommands": [],
+  "doubleTapSensitivity": 300,
+  "gamemode": "survival",
+  "inspectHistorySize": 5,
+  "maturity": 18000000,
+  "minBuildCost": 60.0,
+  "testPenalty": 900000,
+  "vpnApyKey": ""
+}
+```
+
+The generic config file. Here you can specify config path map. Just specify the configuration name and map it to 
+desired path so servers can share a common config. To see the list of configurable items use `configure` command.
+`vpnApyKey` is backed by https://vpnapi.io so get the key here. If apy key is empty, you have only 100 checks per 
+day. With the key you have 1000 which for most cases is enough.
+
 ## worst/databaseDriver/config.json
 
 Config defines behavior of the database.
