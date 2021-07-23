@@ -47,7 +47,7 @@ suggestion correctly, so I don't have to do it. (and I will not)
 - [x] discord bot - plugin has connected discord bot
   - [x] live chat - connects discord channel on discord with in-game chat
   - [x] rank log - for rank change reports
-  - [ ] command log - for command use logging
+  - [x] command log - for command use logging
   - [x] linking - ability to link your discord account with plugin account 
 - [x] ranks - way of administration
   - [x] customizable - player can choose witch rank to play with
@@ -62,7 +62,7 @@ suggestion correctly, so I don't have to do it. (and I will not)
   - [x] mounts - rank can grant you ability to transform into bigger unit
   - [x] color transition - some ranks use color transition (text smoothly interpolates colors)
   - [x] special permissions - rank can also grant you special permissions regarding commands and voting sessions
-  - [ ] afk rank - when you are inactive for an amount of time, you will get marked afk
+  - [x] afk auto kick
 - [x] voting sessions - every player can open his own voting session
   - [x] hud - voting sessions are displayed in hud (message, time, vote state)
   - [x] a permissive vote - if player has permission fitting the command, session is lot easier to pass  
@@ -70,7 +70,6 @@ suggestion correctly, so I don't have to do it. (and I will not)
   - [x] /maps - command can <change|restart|end> the map or display available maps 
   - [x] votekick - marks player griefer. After mark happens, anyone can kick player without a voting session
     - [x] hammer - hammer also works as votekick command, vanilla version is completely replaced
-  - [ ] /kickafk - kicks afk players
 - [x] bundle - plugin supports language bundles
 - [x] inspect - shows information about actions regarding tiles
 - [x] /loadout - stores resource for later and adds special ways to spend them

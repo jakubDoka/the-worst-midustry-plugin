@@ -46,6 +46,8 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger, val config:
 
             val user = users[it.player.uuid()]!!
 
+            user.afkPoints = 0
+
             if(user.data.rank == ranks.griefer) {
                 user.send("action.griefer")
                 return@addActionFilter false
@@ -83,6 +85,8 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger, val config:
         Vars.netServer.admins.addChatFilter { p, message ->
             var s = message
             val u = users[p.uuid()]!!
+
+            u.afkPoints = 0
 
             if(!u.data.hasPerm(Ranks.Perm.Scream)) {
                 s = s.toLowerCase()

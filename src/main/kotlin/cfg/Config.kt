@@ -13,5 +13,6 @@ class Config(var data: Data = Data()) {
         var gamemode: Gamemode = Gamemode.survival,
         val doubleTapSensitivity: Long = 300,
         val configPaths: Map<String, String> = mapOf(),
+        val afkPeriodInMinutes: Long = 5,
     )
 }

@@ -15,6 +15,7 @@ class User(val inner: Player, val data: Driver.RawUser, previous: Driver.RawUser
         val prefix = "[coral][[[scarlet]Server[]]:[#cbcbcb] "
     }
 
+    var afkPoints: Int = 0
     var mount: Unit? = null
     val pets = mutableListOf<Pets.Pet>()
 

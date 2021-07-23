@@ -1,6 +1,8 @@
 package game
 
+import arc.Core
 import arc.util.Time
+import arc.util.Timer
 import cfg.Config
 import cfg.Globals
 import db.Driver
@@ -82,6 +84,21 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
                 user.data.stats.built++
             }
         }
+
+        if(!Globals.testing) Timer.schedule({
+            Core.app.post {
+                logger.run {
+                    forEach { _, v ->
+                        if (v.afkPoints >= config.data.afkPeriodInMinutes) {
+                            v.inner.con.kick(v.data.translate("afk.kick"), 0)
+                        } else if (v.afkPoints != 0) {
+                            v.send( "afk.warming", config.data.afkPeriodInMinutes, v.afkPoints)
+                        }
+                        v.afkPoints++
+                    }
+                }
+            }
+        }, 0f, 60f)
     }
 
 
