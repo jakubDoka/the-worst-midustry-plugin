@@ -46,9 +46,6 @@ class Main : Plugin(), Reloadable {
         "boost" to boost,
     )
 
-    private val game = Handler(users, logger, config, Command.Kind.Game)
-    private val terminal = Handler(users, logger, config, Command.Kind.Cmd)
-
     private val discord = Discord(Globals.root + "bot/config.json", logger, driver, users) {
         it.reg(Help.Discord(it, game))
         it.reg(Execute(driver))
@@ -61,6 +58,8 @@ class Main : Plugin(), Reloadable {
         it.reg(MapManager(driver))
         it.reg(Maps(config, voting, driver))
     }
+    private val game: Handler = Handler(users, logger, config, Command.Kind.Game, discord)
+    private val terminal = Handler(users, logger, config, Command.Kind.Cmd, discord)
 
     override fun reload() {
         config.data = try {
@@ -70,7 +69,7 @@ class Main : Plugin(), Reloadable {
                 if (path != null) {
                     v.configPath = path
                 }
-                if(k == "boost") continue
+                if(k == "main") continue
                 v.reload()
             }
             cfg
@@ -90,7 +89,7 @@ class Main : Plugin(), Reloadable {
         }
 
         logger.on(EventType.ServerLoadEvent::class.java) {
-            boost.reload()
+            reload()
         }
     }
 

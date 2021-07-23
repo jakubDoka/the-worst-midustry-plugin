@@ -280,8 +280,9 @@ game chat with discord chat and `rankLog` to log the rank changes.
 
 `duration` of the boost in seconds.
 
-`effects` enumerate the boost effects on the game. If you want to know full list of options, 
-add something random and error with options will show up.
+`effects` enumerates the boost effects on the game. More precisely, it will temporarily multiply the rule value.
+Mind that multiplying by zero can break the game. If you want to know full list of options, add something random 
+and error with options will show up.
 
 
 

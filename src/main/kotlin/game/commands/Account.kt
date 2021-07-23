@@ -11,7 +11,7 @@ import org.apache.commons.codec.digest.DigestUtils
 import java.util.regex.Pattern
 
 // Account is game only
-class Account(val driver: Driver, val users: Users, val discord: Discord, val config: Config, val ranks: Ranks): Command("account", Ranks.Control.Paralyzed) {
+class Account(val driver: Driver, val users: Users, val discord: Discord, val config: Config, val ranks: Ranks): Command("account", Ranks.Control.Paralyzed, true) {
     private val confirmQueue = HashMap<Long, String>()
 
     private val containsNumber = Pattern.compile(".*\\d.*")

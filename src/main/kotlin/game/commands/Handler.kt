@@ -10,10 +10,11 @@ import mindustry.gen.Player
 import mindustry_plugin_utils.Logger
 
 import java.lang.RuntimeException
+import java.lang.StringBuilder
 
 
 //handler registers game and terminal commands
-class Handler(val users: Users, val logger: Logger, val config: Config, private val kind: Command.Kind): HashMap<String, Command>() {
+class Handler(val users: Users, val logger: Logger, val config: Config, private val kind: Command.Kind, val discord: Discord): HashMap<String, Command>() {
     lateinit var inner: CommandHandler
 
     fun init(handler: CommandHandler) {
@@ -52,6 +53,19 @@ class Handler(val users: Users, val logger: Logger, val config: Config, private 
                     if(command.control.value > user.data.rank.control.value) {
                         user.send("tooLowControl", user.data.rank.control, command.control)
                         return@register
+                    }
+
+                    if (!command.censored) {
+                        discord.with("commandLog") {
+                            it.restChannel.createMessage(String.format(
+                                "id: **%d** name:**%s** rank: **%s** command: **%s** args: **%s**",
+                                user.data.id,
+                                user.data.name,
+                                user.data.rank.name,
+                                command.name,
+                                a.joinTo(StringBuilder(), " ").toString()
+                            )).block()
+                        }
                     }
 
                     command.user = user
