@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.4.31"
+    id("org.jetbrains.kotlin.jvm") version "1.5.0"
 }
 
 
@@ -7,11 +7,10 @@ plugins {
 repositories {
     mavenCentral()
     maven { url = uri("https://jitpack.io") }
-    jcenter()
 }
 
-val mindVer = "v126.2"
-val utilsVer = "v0.3.8"
+val mindVer = "v128.1"
+val utilsVer = "v0.4.1"
 val exposedVer = "0.31.1"
 val junitVersion = "5.6.1"
 val klaxonVer = "5.5"
@@ -23,7 +22,6 @@ val codecVer = "1.11"
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
-    compileOnly("com.github.Anuken.Arc:arc-core:$mindVer")
     compileOnly("com.github.Anuken.Mindustry:core:$mindVer")
 
     implementation("com.beust:klaxon:$klaxonVer")
@@ -49,7 +47,12 @@ tasks {
     }
 
     jar {
-        from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+        from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it) }) {
+            exclude("**/META-INF/*.SF")
+            exclude("**/META-INF/*.DSA")
+            exclude("**/META-INF/*.RSA")
+        }
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
 
     "test"(Test::class) {

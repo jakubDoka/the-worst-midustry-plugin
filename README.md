@@ -31,27 +31,27 @@ suggestion correctly, so I don't have to do it. (and I will not)
 - [x] database - plugin is using postgres database
   - [x] user account - every player has his own account and unique identifier
     - [x] password - user have right to maintain multiple accounts if he adds a password to them
-    - [x] a custom name - user can change his name in game by command, plugin will remember his name
+    - [x] a custom name - user can change his name in the_worst_one.game by command, plugin will remember his name
   - [x] bans - subnet and uuid bans
     - [ ] vpn - vpn detection with some free apy
   - [x] profile - player has his own profile that is viewable
     - [x] stats - plugin is counting player actions and saving then to database
-  - [x] full control - modifying database can be done from server terminal, game or discord 
+  - [x] full control - modifying database can be done from server terminal, the_worst_one.game or discord 
   - [x] /search - searching in a database can be performed by any player
   - [x] /mapmanager - command to manage maps. They ase stored in database and can be e
     enabled or disabled.
     - [ ] map stats - serves should track statistics to convey what maps should be removed.
 - [x] configurations - plugin is highly configurable, all ranks can be defined by the owner of server
-  - [x] /configure - gives ability to modify json config file from command like game and discord
+  - [x] /configure - gives ability to modify json config file from command like the_worst_one.game and discord
     - [x] reloading - configuration can be reloaded while server is running
 - [x] discord bot - plugin has connected discord bot
-  - [x] live chat - connects discord channel on discord with in-game chat
+  - [x] live chat - connects discord channel on discord with in-the_worst_one.game chat
   - [x] rank log - for rank change reports
   - [x] command log - for command use logging
   - [x] linking - ability to link your discord account with plugin account 
 - [x] ranks - way of administration
   - [x] customizable - player can choose witch rank to play with
-  - [x] rank info - /ranks is in-game command that can show what ranks you obtained or yor progress towards obtaining them
+  - [x] rank info - /ranks is in-the_worst_one.game command that can show what ranks you obtained or yor progress towards obtaining them
   - [x] quests - you can obtain ranks by quests
     - [x] stats - all your stats in profile can be used as quest
     - [x] relations - rank ca be obtained only if you already have some ranks
@@ -70,7 +70,7 @@ suggestion correctly, so I don't have to do it. (and I will not)
   - [x] /maps - command can <change|restart|end> the map or display available maps 
   - [x] votekick - marks player griefer. After mark happens, anyone can kick player without a voting session
     - [x] hammer - hammer also works as votekick command, vanilla version is completely replaced
-- [x] bundle - plugin supports language bundles
+- [x] the_worst_one.bundle - plugin supports language bundles
 - [x] inspect - shows information about actions regarding tiles
 - [x] /loadout - stores resource for later and adds special ways to spend them
   - [x] /buildcore - build core from loadout resources
@@ -177,7 +177,7 @@ Somewhat less important is `color` property which determinate the color of the r
 colors can be combined creating gradient. You have to use hex notation and separate colors with spaces.
 
 `description` is what shows up when you use `/ranks <rankName>`. This should describe rank purpose, some story 
-or whatever, you can leave it blanc. The description supports a bundle, that's why you have to write each
+or whatever, you can leave it blanc. The description supports a the_worst_one.bundle, that's why you have to write each
 translation under the key. `default` key is fall back for players that are missing a translation.
 
 `displayed` determinate whether rank should be appended to players name. This is useful for common ranks like 
@@ -211,14 +211,14 @@ other effects. Probably more to come.
     - `roles` if player have his discord account synced, this quest can set the discord role as requirement to 
       obtain the rank. Roles are continuous string where ';' are delimiters between role names.
       
-- `unit` can be set to name of some in game unit and if player uses `/spawn mount` he will turn into that unit.
+- `unit` can be set to name of some in the_worst_one.game unit and if player uses `/spawn mount` he will turn into that unit.
 related property is `unitRecharge` which signifies the time since dismount in milliseconds that is required for 
   a mount to be used again.
   
 - `voteValue` indicates how much is players vote worth. The total vote count required is also affected by this 
   property, when player is online.
   
-- `pets` defines which pets the rank owns and will spawn when player joins the game.
+- `pets` defines which pets the rank owns and will spawn when player joins the the_worst_one.game.
   
 ## worst/bot/config.json
 
@@ -243,7 +243,7 @@ File contains discord bot configuration
 `permissions` are way to map the required roles to use commands. (`"command name": [..roles]`)
 
 `channels` hold ides to guild channels that are used by the plugin. The options are `chat` ro bridge 
-game chat with discord chat and `rankLog` to log the rank changes.
+the_worst_one.game chat with discord chat and `rankLog` to log the rank changes.
 
 ## worst/buildcore/config.json
 
@@ -279,8 +279,8 @@ game chat with discord chat and `rankLog` to log the rank changes.
 
 `duration` of the boost in seconds.
 
-`effects` enumerates the boost effects on the game. More precisely, it will temporarily multiply the rule value.
-Mind that multiplying by zero can break the game. If you want to know full list of options, add something random 
+`effects` enumerates the boost effects on the the_worst_one.game. More precisely, it will temporarily multiply the rule value.
+Mind that multiplying by zero can break the the_worst_one.game. If you want to know full list of options, add something random 
 and error with options will show up.
 
 
