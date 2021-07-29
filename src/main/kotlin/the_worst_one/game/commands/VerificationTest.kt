@@ -117,7 +117,7 @@ class VerificationTest(val ranks: Ranks, val users: Users, val config: Config, o
             val sb = StringBuilder("[white]${question.first}[]\n")
             for((i, o) in question.second.withIndex()) {
                 sb
-                    .append("\t$i)")
+                    .append("\t${i+1})")
                     .append(if(o.startsWith("#")) o.substring(1) else o)
                     .append("\n")
             }
