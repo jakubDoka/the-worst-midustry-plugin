@@ -8,7 +8,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import mindustry.gen.Call
 import java.util.*
 import kotlin.collections.HashSet
 import kotlin.reflect.full.declaredMemberProperties
@@ -119,20 +118,24 @@ abstract class Quest(val name: String, val permanent: Boolean = true) {
                 GlobalScope.launch {
                     while(true) {
                         val user = input.receive() ?: break
+                        var someRanksLost = false
                         outer@ for((k, v) in ranks) {
                             if (v.kind != Ranks.Kind.Special) continue
                             val contains = user.data.specials.contains(k)
                             if(contains && v.permanent) continue
 
                             for ((n, a) in v.quest) {
-                                val quest = get(n)
-                                if(quest == null) {
-                                    Call.sendMessage(n)
-                                    continue
-                                }
+                                val quest = get(n) ?: continue
                                 if (quest.permanent && contains) continue
                                 val message = quest.check(user.data, a)
                                 if (message != complete) {
+                                    someRanksLost = true
+                                    if (Globals.testing) {
+                                        user.data.specials.remove(k)
+                                    } else Core.app.post {
+                                        user.data.specials.remove(k)
+                                        user.send("quest.lost", v.postfix)
+                                    }
                                     continue@outer
                                 }
                             }
@@ -144,8 +147,13 @@ abstract class Quest(val name: String, val permanent: Boolean = true) {
                                 user.send("quest.obtained", v.postfix)
                             }
                         }
+
                         if(!Globals.testing) Core.app.post {
                             pets.populate(user)
+                            if(someRanksLost && !user.data.specials.contains(user.data.display.name)) {
+                                user.data.display = user.data.rank
+                                user.initData()
+                            }
                         }
                     }
                 }

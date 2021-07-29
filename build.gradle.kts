@@ -47,7 +47,7 @@ tasks {
     }
 
     jar {
-        from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it) }) {
+        from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }) {
             exclude("**/META-INF/*.SF")
             exclude("**/META-INF/*.DSA")
             exclude("**/META-INF/*.RSA")
