@@ -9,7 +9,7 @@ repositories {
     maven { url = uri("https://jitpack.io") }
 }
 
-val mindVer = "v128.1"
+val mindVer = "v129.1"
 val utilsVer = "v0.4.1"
 val exposedVer = "0.31.1"
 val junitVersion = "5.6.1"
