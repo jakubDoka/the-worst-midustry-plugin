@@ -283,5 +283,30 @@ the_worst_one.game chat with discord chat and `rankLog` to log the rank changes.
 Mind that multiplying by zero can break the the_worst_one.game. If you want to know full list of options, add something random 
 and error with options will show up.
 
+# worst/pets/config.json
 
+```json
+{
+  "somePet": {
+    "acceleration": 100.0,
+    "attachment": 50.0,
+    "effectName": "fallSmoke",
+    "friction": 0.0,
+    "mating": 50.0,
+    "maxSpeed": 1000.0,
+    "minSpeed": 0.0
+  }
+}
+```
+ In this file you can define the pet configuration, to which you can refer in rank configuration. The property under which 
+ the pet is defined is also its name. 
+ 
+If you enter invalid `effectName` pets will not load and list of all effects will show
+ up. Some effects will not work as they need unit of block as argument. 
+
+`attachment` is how much is pet attracted to player.
+
+`mating` is how much is pet attracted to other pets in the group.
+
+If you specify high `minSpeed`, pet will be unable to settle down.
 

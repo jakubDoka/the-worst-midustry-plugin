@@ -85,6 +85,10 @@ object Globals {
         }
     }
 
+    fun effectListString(): String {
+        return Fx::class.java.fields.joinTo(StringBuilder(), " ") { it.name }.toString()
+    }
+
     private lateinit var itemString: String
     fun listItems(): String {
         if(!this::itemString.isInitialized) {
@@ -157,6 +161,8 @@ object Globals {
 
         return sb.toString()
     }
+
+
 
     interface Log {
         val prefix: String

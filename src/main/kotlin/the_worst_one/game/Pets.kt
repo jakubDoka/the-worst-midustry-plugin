@@ -9,6 +9,7 @@ import the_worst_one.cfg.Reloadable
 import com.beust.klaxon.Json
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
+import mindustry.content.Fx
 import the_worst_one.game.u.User
 import mindustry.entities.Effect
 import mindustry.game.EventType
@@ -72,6 +73,7 @@ class Pets(val users: Users, val logger: Logger, override var configPath: String
         } catch (e: Exception) {
             e.printStackTrace()
             Globals.loadFailMessage("pets", e)
+            println(Globals.effectListString())
             Fs.createDefault(configPath, mapOf(
                 "somePet" to Stats()
             ))
