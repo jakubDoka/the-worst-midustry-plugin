@@ -8,6 +8,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 import kotlin.collections.HashSet
 import kotlin.reflect.full.declaredMemberProperties
@@ -111,6 +113,21 @@ abstract class Quest(val name: String, val permanent: Boolean = true) {
                 override fun check(user: Driver.RawUser, value: Any): String {
                     val v = long(value) ?: return user.translate("quest.error")
                     return points(v - user.points(ranks, driver.config.multiplier), user)
+                }
+            })
+
+            reg(object: Quest("pointPlace") {
+                override fun check(user: Driver.RawUser, value: Any): String {
+                    val v = long(value) ?: return user.translate("quest.error")
+                    val amount = transaction {
+                        Driver.Users.select { Driver.Users.points greater user.points(ranks, driver.config.multiplier) }.count()
+                    }
+
+                    return if(amount > v) {
+                        user.translate("quest.lowOnLadder", amount, v)
+                    } else {
+                        complete
+                    }
                 }
             })
 

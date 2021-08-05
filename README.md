@@ -12,7 +12,7 @@ gets created automatically. Config file should look similar to this.
 {
   "database" : "mtest", 
   "password" : "helloThere", 
-  "user" : "postgres",
+  "user" : "postgres"
 }
 ```
 Important things you have to set are user and password. Set them to values with which you log into postgres
@@ -211,9 +211,12 @@ other effects. Probably more to come.
     - `roles` if player have his discord account synced, this quest can set the discord role as requirement to 
       obtain the rank. Roles are continuous string where ';' are delimiters between role names.
       
-- `unit` can be set to name of some in the_worst_one.game unit and if player uses `/spawn mount` he will turn into that unit.
-related property is `unitRecharge` which signifies the time since dismount in milliseconds that is required for 
-  a mount to be used again.
+    - `pointPlace` a special quest that can set position on the leader board as quest. ("pointPlace": 10 means only 
+      top 10 players can obtain this rank)
+      
+- `unit` can be set to name of some in the_worst_one.game unit and if player uses `/spawn mount` he will turn into 
+that unit. Related property is `unitRecharge` which signifies the time since dismount in milliseconds that is required 
+  for a mount to be used again.
   
 - `voteValue` indicates how much is players vote worth. The total vote count required is also affected by this 
   property, when player is online.

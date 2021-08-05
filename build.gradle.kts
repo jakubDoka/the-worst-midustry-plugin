@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     id("org.jetbrains.kotlin.jvm") version "1.5.0"
 }
@@ -7,6 +9,7 @@ plugins {
 repositories {
     mavenCentral()
     maven { url = uri("https://jitpack.io") }
+    maven("https://dl.bintray.com/kotlin/kotlin-eap")
 }
 
 val mindVer = "v129.1"
@@ -61,4 +64,12 @@ tasks {
         }
         reports.html.isEnabled = true
     }
+}
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions {
+    jvmTarget = "1.8"
+}
+val compileTestKotlin: KotlinCompile by tasks
+compileTestKotlin.kotlinOptions {
+    jvmTarget = "1.8"
 }
