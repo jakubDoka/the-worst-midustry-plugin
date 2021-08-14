@@ -9,11 +9,15 @@ import the_worst_one.db.Quest
 import the_worst_one.db.Ranks
 import the_worst_one.game.u.User
 import kotlinx.coroutines.runBlocking
+import mindustry.content.UnitTypes
 import mindustry.game.EventType
 import mindustry.gen.Player
+import mindustry.gen.Call
 import mindustry.net.NetConnection
+import mindustry.type.UnitType
 import mindustry_plugin_utils.Logger
 import mindustry_plugin_utils.Templates
+
 
 // Users keeps needed data about users in ram memory
 class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val config: Config): HashMap<String, User>() {
@@ -56,11 +60,12 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
 
         logger.on(EventType.UnitDestroyEvent::class.java) {
             var uuid: String? = null
-            if(it.unit.isPlayer) {
-                val user = get(it.unit.player.uuid())!!
+            if(!it.unit.isPlayer || it.unit.type == UnitTypes.alpha || it.unit.type == UnitTypes.beta || it.unit.type == UnitTypes.gamma) {
+                val user = get(it.unit.player?.uuid()) ?: return@on
                 user.data.stats.onDeath()
                 user.data.stats.deaths++
                 uuid = user.inner.uuid()
+                return@on
             }
 
             forEach { _, u ->
@@ -71,7 +76,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
         }
 
         logger.on(EventType.BlockBuildEndEvent::class.java) {
-            if(!it.unit.isPlayer || it.tile.block().buildCost < config.data.minBuildCost) {
+            if(!it.unit.isPlayer || (!it.breaking && it.tile.block().buildCost < config.data.minBuildCost)) {
                 return@on
             }
 

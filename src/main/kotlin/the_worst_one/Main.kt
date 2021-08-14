@@ -83,7 +83,7 @@ class Main : Plugin(), Reloadable {
             discord.with("chat") {
                 if(e.message.startsWith("/")) return@with
                 val user = users[e.player.uuid()]!!
-                it.restChannel.createMessage(Globals.discordMessage(user.data.idName(), e.message)).block()
+                Globals.run { it.restChannel.createMessage(Globals.discordMessage(user.data.idName(), e.message)).block() }
             }
         }
 

@@ -246,6 +246,14 @@ class Driver(override var configPath: String = "config/driver.json", val ranks: 
             }
         }
 
+        fun admin(): Boolean {
+            return rank.control.admin() || display.control.admin()
+        }
+
+        fun spectator(): Boolean {
+            return rank.control.spectator() || display.control.spectator()
+        }
+
         fun points(ranks: Ranks, multiplier: Stats): Long {
             return stats.points(multiplier) + rankValue(ranks)
         }
@@ -451,7 +459,7 @@ class Driver(override var configPath: String = "config/driver.json", val ranks: 
                             messages * multiplier.messages +
                             commands * multiplier.commands +
                             playTime / (multiplier.playTime + 1) +
-                            lastDeath / (multiplier.lastDeath + 1)
+                            silence / (multiplier.silence + 1)
                     )
         }
 

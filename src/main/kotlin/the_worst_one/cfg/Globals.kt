@@ -1,5 +1,9 @@
 package the_worst_one.cfg
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import mindustry.content.UnitTypes
 import mindustry.entities.Effect
 import mindustry.type.UnitType
@@ -162,7 +166,24 @@ object Globals {
         return sb.toString()
     }
 
+    private val channel = Channel<() -> Unit>()
 
+    init {
+        runBlocking {
+            GlobalScope.launch {
+                while (true) {
+                    val fn = channel.receive()
+                    launch {
+                        fn()
+                    }
+                }
+            }
+        }
+    }
+
+    fun run(fn: () -> Unit) {
+        runBlocking { channel.send(fn) }
+    }
 
     interface Log {
         val prefix: String

@@ -8,6 +8,7 @@ import the_worst_one.cfg.Globals.time
 import the_worst_one.game.Users
 import mindustry.gen.Player
 import mindustry_plugin_utils.Logger
+import the_worst_one.cfg.Globals
 
 import java.lang.RuntimeException
 import java.lang.StringBuilder
@@ -50,21 +51,21 @@ class Handler(val users: Users, val logger: Logger, val config: Config, private 
                         return@register
                     }
 
-                    if(command.control.value > user.data.rank.control.value) {
+                    if(command.control.value > user.data.rank.control.value && command.control.value > user.data.display.control.value) {
                         user.send("tooLowControl", user.data.rank.control, command.control)
                         return@register
                     }
 
                     if (!command.censored) {
                         discord.with("commandLog") {
-                            it.restChannel.createMessage(String.format(
+                            Globals.run { it.restChannel.createMessage(String.format(
                                 "id: **%d** name:**%s** rank: **%s** command: **%s** args: **%s**",
                                 user.data.id,
                                 user.data.name,
                                 user.data.rank.name,
                                 command.name,
                                 a.joinTo(StringBuilder(), " ").toString()
-                            )).block()
+                            )).block() }
                         }
                     }
 

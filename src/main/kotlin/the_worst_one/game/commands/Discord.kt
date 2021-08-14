@@ -29,7 +29,7 @@ class Discord(override var configPath: String = "config/discord.json", val logge
     val verificationQueue = HashMap<Long, CodeData>()
 
     init {
-        users.quests.reg(object: Quest("roles", false) {
+        users.quests.reg(object: Quest("roles") {
             override fun check(user: Driver.RawUser, value: Any): String {
                 if(user.discord == Driver.Users.noDiscord) return user.translate("quest.roles.none")
                 if(handler == null) return user.translate("quest.roles.inactive")
@@ -109,7 +109,7 @@ class Discord(override var configPath: String = "config/discord.json", val logge
         val args = arrayOf(by?.idName() ?: "unknown", user.idName(), old.postfix, new.postfix, reason)
         val msg = Templates.cleanColors(Bundle.translate("setrank.success", *args))
         with("rankLog") {
-            it.restChannel.createMessage(msg).block()
+            Globals.run { it.restChannel.createMessage(msg).block() }
         }
 
         users.send("setrank.success", *args)

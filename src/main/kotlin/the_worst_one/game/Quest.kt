@@ -1,20 +1,20 @@
 package the_worst_one.db
 
 import arc.Core
-import the_worst_one.cfg.Globals
-import the_worst_one.game.Pets
-import the_worst_one.game.u.User
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import the_worst_one.cfg.Globals
+import the_worst_one.game.Pets
+import the_worst_one.game.Users
+import the_worst_one.game.u.User
 import java.util.*
-import kotlin.collections.HashSet
 import kotlin.reflect.full.declaredMemberProperties
 
-abstract class Quest(val name: String, val permanent: Boolean = true) {
+abstract class Quest(val name: String) {
     companion object {
         const val complete = "complete"
     }
@@ -52,11 +52,9 @@ abstract class Quest(val name: String, val permanent: Boolean = true) {
     class Quests(val ranks: Ranks, val driver: Driver): HashMap<String, Quest>() {
         lateinit var pets: Pets
         val input = Channel<User?>()
-        val nonPermanent = HashSet<String>()
 
         fun reg(q: Quest) {
             put(q.name, q)
-            if(!q.permanent) nonPermanent.add(q.name)
         }
 
         init {
@@ -143,7 +141,6 @@ abstract class Quest(val name: String, val permanent: Boolean = true) {
 
                             for ((n, a) in v.quest) {
                                 val quest = get(n) ?: continue
-                                if (quest.permanent && contains) continue
                                 val message = quest.check(user.data, a)
                                 if (message != complete) {
                                     someRanksLost = true
@@ -157,6 +154,8 @@ abstract class Quest(val name: String, val permanent: Boolean = true) {
                                 }
                             }
 
+                            if(user.data.specials.contains(k)) continue
+
                             if (Globals.testing) {
                                 user.data.specials.add(k)
                             } else Core.app.post {
@@ -169,6 +168,7 @@ abstract class Quest(val name: String, val permanent: Boolean = true) {
                             pets.populate(user)
                             if(someRanksLost && !user.data.specials.contains(user.data.display.name)) {
                                 user.data.display = user.data.rank
+                                driver.users.set(user.data.id, Driver.Users.display, user.data.display.name)
                                 user.initData()
                             }
                         }

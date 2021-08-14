@@ -21,6 +21,7 @@ val postgreVer = "42.2.10"
 val jsoupVer = "1.12.1"
 val discord4jVer = "3.1.5"
 val codecVer = "1.11"
+val corotineVer = "1.5.1"
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
@@ -35,6 +36,8 @@ dependencies {
     implementation("org.postgresql:postgresql:$postgreVer")
     implementation("com.discord4j:discord4j-core:$discord4jVer")
     implementation("commons-codec:commons-codec:$codecVer")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$corotineVer")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:$corotineVer")
 
     testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
     testImplementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))

@@ -14,6 +14,7 @@ import mindustry.net.Administration.ActionType;
 import mindustry_plugin_utils.Logger
 import mindustry.gen.Call
 import java.lang.StringBuilder
+import java.util.regex.Pattern
 
 
 // handles actions and message filtering
@@ -21,6 +22,7 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger, val config:
     var map = LockMap()
     val inspect = Inspect(map, config, users, logger)
     val banned = mutableMapOf<Tile, String>()
+    val screaming_regex = Pattern.compile("[A-Z]{2}")
 
     fun init() {
         logger.on(EventType.PlayEvent::class.java) {
@@ -88,7 +90,22 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger, val config:
             u.afkPoints = 0
 
             if(!u.data.hasPerm(Ranks.Perm.Scream)) {
-                s = s.toLowerCase()
+                var afterSpace = true
+                val bytes = s.toCharArray()
+                for (i in bytes.indices) {
+                    if (bytes[i] == ' ') {
+                        afterSpace = true
+                        continue
+                    }
+
+                    if(afterSpace){
+                        afterSpace = false
+                        continue
+                    }
+
+                    bytes[i] = bytes[i].toLowerCase()
+                }
+                s = bytes.concatToString()
             }
 
             if(!u.data.mutedForAll) users.sendUserMessage(u, s)

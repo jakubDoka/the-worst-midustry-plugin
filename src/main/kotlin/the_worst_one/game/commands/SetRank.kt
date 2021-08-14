@@ -25,7 +25,7 @@ class SetRank(val driver: Driver, val users: Users, private val ranks: Ranks, va
             return Result.InvalidRank
         }
 
-        if (rank.control.admin() && kind == Kind.Game && user!!.data.rank.control != Ranks.Control.Absolute) {
+        if (kind != Kind.Cmd && (rank.control.admin() || other.rank.control.admin()) && (data == null || data!!.rank.control != Ranks.Control.Absolute)) {
             send( "setrank.notMutable")
             return Result.NotMutable
         }

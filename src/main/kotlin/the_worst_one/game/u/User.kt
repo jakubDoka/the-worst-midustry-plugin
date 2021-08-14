@@ -28,7 +28,7 @@ class User(val inner: Player, val data: Driver.RawUser, previous: Driver.RawUser
 
     fun initData(previous: Driver.RawUser? = null) {
         inner.name = data.name + data.display.display + "[gray]#" + data.id + "[white]"
-        inner.admin = data.rank.control.admin()
+        inner.admin = data.admin()
         data.ip = inner.con.address
         data.uuid = inner.uuid()
         data.lastCommand = previous?.lastCommand ?: 0L

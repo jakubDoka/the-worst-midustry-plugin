@@ -138,21 +138,20 @@ abstract class Command(val name: String, val control: Ranks.Control = Ranks.Cont
         }
 
         fun sendPlain(text: String) {
-            send(command.message!!.channel.block(), text)
+            Globals.run { send(command.message!!.channel.block(), text) }
         }
 
-        fun sendPrivate(key: String, vararg args: Any): Boolean {
-            return sendPrivatePlain(translate(key, *args))
+        fun sendPrivate(key: String, vararg args: Any) {
+            sendPrivatePlain(translate(key, *args))
         }
 
-        fun sendPrivatePlain(text: String): Boolean {
-            return send(command.message!!.author.get().privateChannel.block(), text)
+        private fun sendPrivatePlain(text: String) {
+            Globals.run { send(command.message!!.author.get().privateChannel.block(), text) }
         }
 
-        fun send(channel: MessageChannel?, text: String): Boolean {
+        fun send(channel: MessageChannel?, text: String) {
             if(command.message == null) Templates.cleanColors(text)
-            else channel?.createMessage(Templates.cleanColors(text))?.block() ?: return false
-            return true
+            else Globals.run { channel?.createMessage(Templates.cleanColors(text))?.block() }
         }
 
         fun alert(titleKey: String, bodyKey: String, vararg arguments: Any) {
@@ -180,7 +179,7 @@ abstract class Command(val name: String, val control: Ranks.Control = Ranks.Cont
                 if(!e.asRequest().title().isAbsent)
                     println(e.asRequest().title())
                 println(e.asRequest().description().get())
-            } else command.message!!.channel.block()?.createEmbed(embed)?.block()
+            } else Globals.run { command.message!!.channel.block()?.createEmbed(embed)?.block() }
         }
 
         fun clean(message: String): String {
