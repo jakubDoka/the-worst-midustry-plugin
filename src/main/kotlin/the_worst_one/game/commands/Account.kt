@@ -11,7 +11,7 @@ import org.apache.commons.codec.digest.DigestUtils
 import java.util.regex.Pattern
 
 // Account is the_worst_one.game only
-class Account(val driver: Driver, val users: Users, val discord: Discord, val config: Config, val ranks: Ranks): Command("account", Ranks.Control.Paralyzed, true) {
+class Account(val driver: Driver, val users: Users, val discord: Discord, val config: Config, val ranks: Ranks): Command("account", Ranks.Control.Paralyzed) {
     private val confirmQueue = HashMap<Long, String>()
 
     private val containsNumber = Pattern.compile(".*\\d.*")

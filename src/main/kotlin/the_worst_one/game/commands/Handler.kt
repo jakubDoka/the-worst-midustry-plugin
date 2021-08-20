@@ -34,7 +34,7 @@ class Handler(val users: Users, val logger: Logger, val config: Config, private 
                     }
 
                     val dif = user.data.commandRateLimit * 1000 - Time.millis() + user.data.lastCommand
-                    if(dif > 0 && !user.data.rank.control.admin()) {
+                    if(dif > 0 && !user.data.rank.control.admin() && !config.data.rateLimitFreeCommands.contains(command.name)) {
                         user.send("commandRateLimit", dif.time())
                         return@register
                     }
@@ -56,7 +56,7 @@ class Handler(val users: Users, val logger: Logger, val config: Config, private 
                         return@register
                     }
 
-                    if (!command.censored) {
+                    if (!config.data.censuredCommands.contains(command.name)) {
                         discord.with("commandLog") {
                             Globals.run { it.restChannel.createMessage(String.format(
                                 "id: **%d** name:**%s** rank: **%s** command: **%s** args: **%s**",
