@@ -144,7 +144,7 @@ abstract class Quest(val name: String) {
                                 val message = quest.check(user.data, a)
                                 if (message != complete) {
                                     someRanksLost = true
-                                    if (Globals.testing) {
+                                    if (contains) if (Globals.testing) {
                                         user.data.specials.remove(k)
                                     } else Core.app.post {
                                         user.data.specials.remove(k)
