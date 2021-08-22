@@ -38,7 +38,7 @@ class Maps(val config: Config, private val voting: Voting, val driver: Driver): 
                 alertPlain(Templates.page(
                     bundle.translate("maps.list.title"),
                     maps,
-                    10,
+                    15,
                     page.toInt(),
                 ))
 

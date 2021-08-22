@@ -91,7 +91,10 @@ suggestion correctly, so I don't have to do it. (and I will not)
   "maturity": 18000000,
   "minBuildCost": 60.0,
   "testPenalty": 900000,
-  "vpnApyKey": ""
+  "vpnApyKey": "",
+  "afkPeriodInMinutes": 5,
+  "censuredCommands": ["account"],
+  "rateLimitFreeCommands": ["test"]
 }
 ```
 

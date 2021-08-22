@@ -24,6 +24,13 @@ class MapManager(val driver: Driver): Command("mapmanager", Ranks.Control.High) 
                     }
                 }
                 else -> {
+                    if(args.size > 2 && args[2] == "dir") {
+                        for(file in File(args[1]).walkBottomUp()) {
+                            run(arrayOf("add", file.path))
+                        }
+                        return Generic.Success
+                    }
+
                     val file = File(args[if(args[0] == "add") 1 else {
                         if(ensure(args, 3)) return Generic.NotEnough
                         2
@@ -66,8 +73,12 @@ class MapManager(val driver: Driver): Command("mapmanager", Ranks.Control.High) 
 
         when(args[0]) {
             "add" -> {
-                send("mapmanager.add.success", driver.maps.add(map!!))
-                return Generic.Success
+                val newId = driver.maps.add(map!!)
+                if(newId != Long.MAX_VALUE) {
+                    send("mapmanager.add.success", newId)
+                    return Generic.Success
+                }
+                args[0] = "update"
             }
             "update" -> driver.maps.update(id, map!!)
             "remove" -> {

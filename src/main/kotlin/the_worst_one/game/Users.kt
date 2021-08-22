@@ -95,7 +95,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
                         forEach { _, v ->
                             if (v.afkPoints >= config.data.afkPeriodInMinutes) {
                                 v.inner.con.kick(v.data.translate("afk.kick"), 0)
-                            } else if (v.afkPoints != 0) {
+                            } else if (v.afkPoints > 4) {
                                 v.send( "afk.warming", v.afkPoints, config.data.afkPeriodInMinutes)
                             }
                             v.afkPoints++

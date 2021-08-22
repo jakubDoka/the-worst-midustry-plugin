@@ -22,7 +22,7 @@ abstract class Help(val commands: Handler) : Command("help", Ranks.Control.None)
 
             if (commands.containsKey(args[0])) {
                 val c = commands[args[0]]!!
-                user.alert(user.data.translate("${c.name}.help.title"), "${c.name}.help.body")
+                user.alert("${c.name}.help.title", "${c.name}.help.body")
                 return Result.Info
             }
 

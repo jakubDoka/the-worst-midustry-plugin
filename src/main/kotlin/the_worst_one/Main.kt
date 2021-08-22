@@ -74,6 +74,10 @@ class Main : Plugin(), Reloadable {
             cfg
         } catch(e: Exception) {
             Fs.createDefault(configPath, Config.Data())
+            for((k, v) in reloadable) {
+                if(k == "main") continue
+                v.reload()
+            }
             Config.Data()
         }
     }

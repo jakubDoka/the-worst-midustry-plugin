@@ -14,7 +14,7 @@ class Config(var data: Data = Data()) {
         val doubleTapSensitivity: Long = 300,
         val configPaths: Map<String, String> = mapOf(),
         val afkPeriodInMinutes: Long = 5,
-        val censuredCommands: Set<String> = setOf(),
-        val rateLimitFreeCommands: Set<String> = setOf(),
+        val censuredCommands: Set<String> = setOf("account"),
+        val rateLimitFreeCommands: Set<String> = setOf("test"),
     )
 }

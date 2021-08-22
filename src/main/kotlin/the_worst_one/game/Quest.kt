@@ -13,6 +13,7 @@ import the_worst_one.game.Users
 import the_worst_one.game.u.User
 import java.util.*
 import kotlin.reflect.full.declaredMemberProperties
+import mindustry.gen.Call
 
 abstract class Quest(val name: String) {
     companion object {
@@ -117,6 +118,7 @@ abstract class Quest(val name: String) {
             reg(object: Quest("pointPlace") {
                 override fun check(user: Driver.RawUser, value: Any): String {
                     val v = long(value) ?: return user.translate("quest.error")
+
                     val amount = transaction {
                         Driver.Users.select { Driver.Users.points greater user.points(ranks, driver.config.multiplier) }.count()
                     }

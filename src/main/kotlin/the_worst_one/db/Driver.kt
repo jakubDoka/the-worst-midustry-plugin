@@ -350,7 +350,7 @@ class Driver(override var configPath: String = "config/driver.json", val ranks: 
     class Config(
         var user: String = "postgres",
         var password: String = "twstest123",
-        var database: String = "mtest",
+        var database: String = "gee",
         var verbose: Boolean = false,
         val multiplier: Stats = Stats(),
     )
@@ -553,7 +553,8 @@ class Driver(override var configPath: String = "config/driver.json", val ranks: 
 
         fun add(map: mindustry.maps.Map): Long {
             return transaction {
-                Maps.insertAndGetId {
+                if(update(Long.MAX_VALUE, map)) Long.MAX_VALUE
+                else Maps.insertAndGetId {
                     it[name] = map.name()
                     it[author] = map.author()
                     it[file] = map.file.readBytes()
@@ -562,14 +563,14 @@ class Driver(override var configPath: String = "config/driver.json", val ranks: 
             }
         }
 
-        fun update(id: Long, map: mindustry.maps.Map) {
-            transaction {
-                Maps.update({ Maps.id eq id }) {
+        fun update(id: Long, map: mindustry.maps.Map): Boolean {
+            return transaction {
+                Maps.update({ Maps.id.eq(id) or Maps.fileName.eq(map.file.name()) }) {
                     it[name] = map.name()
                     it[author] = map.author()
                     it[file] = map.file.readBytes()
                     it[fileName] = map.file.name()
-                }
+                } == 1
             }
         }
 
