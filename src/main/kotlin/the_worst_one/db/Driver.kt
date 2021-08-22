@@ -18,6 +18,7 @@ import mindustry_plugin_utils.Fs
 import mindustry_plugin_utils.Templates
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.sql.ResultSet
@@ -36,10 +37,8 @@ class Driver(override var configPath: String = "config/driver.json", val ranks: 
 
     override fun reload() {
         if(this::con.isInitialized) {
-            transaction {
-                close()
-            }
-
+            TransactionManager.currentOrNull()?.connection?.close()
+            TransactionManager.resetCurrent(null)
         }
 
         try {

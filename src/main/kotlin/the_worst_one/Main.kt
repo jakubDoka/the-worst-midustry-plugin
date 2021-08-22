@@ -73,6 +73,7 @@ class Main : Plugin(), Reloadable {
             }
             cfg
         } catch(e: Exception) {
+            e.printStackTrace()
             Fs.createDefault(configPath, Config.Data())
             for((k, v) in reloadable) {
                 if(k == "main") continue
