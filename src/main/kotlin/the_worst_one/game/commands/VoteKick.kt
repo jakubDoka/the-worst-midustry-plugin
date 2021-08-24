@@ -5,6 +5,7 @@ import the_worst_one.db.Ranks
 import the_worst_one.game.Users
 import the_worst_one.game.Voting
 import mindustry_plugin_utils.Templates
+import java.util.*
 
 class VoteKick(val driver: Driver, val users: Users, val ranks: Ranks, val voting: Voting, val discord: Discord): Command("votekick") {
     private val kick = Voting.Session.Data(2, 6, "mark", name, Ranks.Perm.VoteKick)
@@ -79,7 +80,7 @@ class VoteKick(val driver: Driver, val users: Users, val ranks: Ranks, val votin
     }
 
     fun idFromName(name: String): String {
-        return Templates.cleanName(name.substring(name.lastIndexOf("#") + 1))
+        return Templates.cleanColors(name.substring(name.lastIndexOf("#") + 1))
     }
 
     enum class Result {
