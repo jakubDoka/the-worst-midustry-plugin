@@ -42,7 +42,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
         }
 
         logger.on(EventType.UnitChangeEvent::class.java) {
-            val user = get(it.player.uuid())!!
+            val user = get(it.player?.uuid()) ?: return@on
             if(user.mount != null) {
                 user.mount!!.kill()
                 user.mount = null

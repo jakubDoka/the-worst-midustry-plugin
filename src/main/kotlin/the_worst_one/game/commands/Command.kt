@@ -145,8 +145,17 @@ abstract class Command(val name: String, val control: Ranks.Control = Ranks.Cont
             sendPrivatePlain(translate(key, *args))
         }
 
+        fun sendPrivateAsync(key: String, vararg args: Any) {
+            sendPrivatePlainAsync(translate(key, *args))
+        }
+
+
+        private fun sendPrivatePlainAsync(text: String) {
+            Globals.run { sendPrivatePlain(text) }
+        }
+
         private fun sendPrivatePlain(text: String) {
-            Globals.run { send(command.message!!.author.get().privateChannel.block(), text) }
+            send(command.message!!.author.get().privateChannel.block(), text)
         }
 
         fun send(channel: MessageChannel?, text: String) {
