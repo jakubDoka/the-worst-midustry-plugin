@@ -56,6 +56,7 @@ class Main : Plugin(), Reloadable {
         it.reg(RankInfo(ranks, users.quests))
         it.reg(MapManager(driver))
         it.reg(Maps(config, voting, driver))
+        it.reg(Online(users))
     }
     private val game: Handler = Handler(users, logger, config, Command.Kind.Game, discord)
     private val terminal = Handler(users, logger, config, Command.Kind.Cmd, discord)
