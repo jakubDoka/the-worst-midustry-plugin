@@ -67,9 +67,8 @@ class Boost(val driver: Driver, val voting: Voting, val logger: Logger, override
         }
 
         voting.add(Voting.Session(create, user!!, args[0]) {
-            active.add(Booster(booster, booster.effects.asIterable().map {
-                apply(it.key, it.value)
-            }.toMap(), booster.duration))
+            booster.effects.forEach { apply(it.key, it.value) }
+            active.add(Booster(booster, booster.duration))
             driver.items.take(booster.cost)
             Call.setRules(Vars.state.rules)
         })
@@ -158,19 +157,16 @@ class Boost(val driver: Driver, val voting: Voting, val logger: Logger, override
     }
 
     companion object {
-        fun apply(stat: String, value: Float): Pair<String, Float> {
+        fun apply(stat: String, value: Float) {
             val field = Rules::class.java.getField(stat)
             val orig = field.getFloat(Vars.state.rules)
-
             field.setFloat(Vars.state.rules, value * orig)
-
-            return stat to orig
         }
     }
 
-    class Booster(val data: Data, val undo: Map<String, Float>, var timer: Long) {
+    class Booster(val data: Data, var timer: Long) {
         fun undo() {
-            for((k, v) in undo) {
+            for((k, v) in data.effects) {
                 val field = Rules::class.java.getField(k)
                 val value = field.getFloat(Vars.state.rules)
                 field.setFloat(Vars.state.rules, value / v)

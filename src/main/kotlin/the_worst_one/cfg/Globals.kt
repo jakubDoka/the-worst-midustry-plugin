@@ -1,5 +1,6 @@
 package the_worst_one.cfg
 
+import io.netty.channel.ChannelFactory
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
