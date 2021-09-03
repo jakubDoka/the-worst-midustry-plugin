@@ -83,14 +83,14 @@ class Loadout(val driver: Driver, val docks: Docks, val voting: Voting, override
                     }
                 }
                 else -> {
-                    send("wrongOption", "load store state")
+                    send("wrongOption", "load store status")
                     return Generic.Mismatch
                 }
             }
         } else if (args[0] == "status") {
             alert("loadout.title", "placeholder", driver.items.format())
         } else {
-            send("wrongOption", "load store state")
+            send("wrongOption", "load store status")
             return Generic.Mismatch
         }
 
