@@ -121,6 +121,7 @@ class VerificationTest(val ranks: Ranks, val users: Users, val config: Config, o
                     .append(if(o.startsWith("#")) o.substring(1) else o)
                     .append("\n")
             }
+            sb.append("Type [orange]/test #[] to answer.")
             test.sendPlain(sb.toString())
         }
 
