@@ -19,7 +19,7 @@ class Main : Plugin(), Reloadable {
     override var configPath = Globals.root + "config.json"
 
     private val config = Config()
-    private val logger = Logger(Globals.root + "logger/config.json")
+    private val logger = Globals.logger
     private val ranks = Ranks(Globals.root + "ranks/config.json")
     private val driver = Driver(Globals.root + "databaseDriver/config.json", ranks)
     private val users = Users(driver, logger, ranks, config)

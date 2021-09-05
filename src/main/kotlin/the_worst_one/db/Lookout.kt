@@ -9,6 +9,7 @@ import java.net.URL
 import the_worst_one.db.Driver.Users
 import kotlinx.coroutines.GlobalScope
 import org.jetbrains.exposed.sql.transactions.transaction
+import the_worst_one.cfg.Globals
 
 // Outlook handles user localization
 class Lookout() {
@@ -16,8 +17,8 @@ class Lookout() {
 
     // Spawns an outlook worker
     init {
-        runBlocking {
-            GlobalScope.launch {
+
+            Globals.runLoggedGlobalScope {
                 while (true) {
                     val inp = input.receive() ?: break
                     val data = localize(inp.ip, inp.locale)
@@ -29,7 +30,6 @@ class Lookout() {
                     }
                 }
             }
-        }
     }
 
     // localize tries to get locale by ip address

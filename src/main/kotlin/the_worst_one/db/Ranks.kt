@@ -8,6 +8,7 @@ import com.beust.klaxon.Klaxon
 import mindustry_plugin_utils.Fs
 import mindustry_plugin_utils.Templates
 import java.io.File
+import java.util.*
 
 // Ranks holds all the_worst_one.game ranks that are used
 class Ranks(override var configPath: String = "config/ranks.json"): HashMap<String, Ranks.Rank>(), Reloadable {

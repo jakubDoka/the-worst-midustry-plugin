@@ -8,14 +8,14 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import the_worst_one.cfg.Globals
 import java.net.URL
 
 class VPN(val config: Config, users: Users) {
     val input = Channel<User?>()
 
     init {
-        runBlocking {
-            GlobalScope.launch {
+            Globals.runLoggedGlobalScope {
                 while (true) {
                     val inp = input.receive() ?: break
                     if(!inp.data.banned() && authorize(inp.inner.con.address)) {
@@ -27,7 +27,6 @@ class VPN(val config: Config, users: Users) {
                     }
                 }
             }
-        }
     }
 
     fun authorize(ip: String): Boolean {

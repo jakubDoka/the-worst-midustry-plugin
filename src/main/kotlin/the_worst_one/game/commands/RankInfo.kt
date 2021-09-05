@@ -39,8 +39,7 @@ class RankInfo(private val ranks: Ranks, private val quests: Quest.Quests): Comm
                     send("ranks.notFound")
                     Generic.NotFound
                 } else {
-                    runBlocking {
-                        GlobalScope.launch {
+                        Globals.runLoggedGlobalScope {
                             val sb = StringBuilder()
                             val user = data
                             for ((q, a) in rank.quest) {
@@ -78,7 +77,6 @@ class RankInfo(private val ranks: Ranks, private val quests: Quest.Quests): Comm
                     }
                     Generic.Success
                 }
-            }
         }
     }
 

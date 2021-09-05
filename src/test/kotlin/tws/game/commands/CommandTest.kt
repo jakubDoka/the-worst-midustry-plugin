@@ -24,11 +24,11 @@ class CommandTest {
     private val ranks = Ranks()
     private val driver = Driver(ranks = ranks)
     private val logger = Logger("config/logger.json")
-    private val users = Users(driver, logger, ranks, config)
+    private val users = Users(driver, ranks, config)
     private val discord = Discord(logger = logger, driver = driver, users = users)
-    private val handler = Handler(users, logger, config, Command.Kind.Game, discord)
+    private val handler = Handler(users, config, Command.Kind.Game, discord)
     private val voting = Voting(users)
-    private val docks = Docks(users, logger, "config/docks.json")
+    private val docks = Docks(users, "config/docks.json")
 
 
     init {
