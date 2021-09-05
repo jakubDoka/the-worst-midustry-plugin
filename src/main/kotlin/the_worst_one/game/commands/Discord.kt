@@ -22,6 +22,7 @@ import mindustry_plugin_utils.Logger
 import mindustry_plugin_utils.Templates
 import mindustry_plugin_utils.discord.Handler
 import java.io.File
+import java.util.*
 
 class Discord(override var configPath: String = "config/discord.json", val logger: Logger, val driver: Driver, val users: Users, private val register: (Discord) -> Unit = {}): Reloadable {
     var handler: Handler? = null
@@ -95,11 +96,10 @@ class Discord(override var configPath: String = "config/discord.json", val logge
                 }
             }
 
-            runBlocking {
-                GlobalScope.launch {
+
+                Globals.runLoggedGlobalScope {
                     handler!!.launch()
                 }
-            }
 
             println("bot:: connected")
         }

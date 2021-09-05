@@ -8,6 +8,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.lowerCase
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import the_worst_one.cfg.Globals
 import kotlin.math.min
 
 class Search(val ranks: Ranks): Command("search") {
@@ -15,8 +16,7 @@ class Search(val ranks: Ranks): Command("search") {
         val sb = StringBuilder()
 
 
-        runBlocking {
-            GlobalScope.launch {
+            Globals.runLoggedGlobalScope(false) {
                 when (args[0]) {
                     "simple" -> {
                         val u = args[1].split(" ")
@@ -57,14 +57,14 @@ class Search(val ranks: Ranks): Command("search") {
                             send("search.error", e.message ?: "error does not even have message, that fucked up it is")
                         }
                         Result.Error
-                        return@launch
+                        return@runLoggedGlobalScope
                     }
                     else -> {
                         post {
                             send("wrongOption", "complex simple")
                         }
                         Generic.Mismatch
-                        return@launch
+                        return@runLoggedGlobalScope
                     }
                 }
 
@@ -76,7 +76,6 @@ class Search(val ranks: Ranks): Command("search") {
                     send("search.result", sb.toString())
                 }
             }
-        }
 
         return Generic.Success
     }
