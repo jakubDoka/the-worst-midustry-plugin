@@ -23,6 +23,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.sql.ResultSet
 import java.util.*
+import kotlin.collections.HashSet
 import kotlin.math.max
 
 // Driver handles all database calls and holds information about the_worst_one.db structure
@@ -496,7 +497,7 @@ class Driver(override var configPath: String = "config/driver.json", val ranks: 
         val author = text("author")
         val played = long("played").default(0)
         val won = long("won").default(0)
-        val fileName = text("fileName").index("fileName")
+        val fileName = text("fileName")
         val file = binary("file")
     }
 
@@ -531,7 +532,7 @@ class Driver(override var configPath: String = "config/driver.json", val ranks: 
         fun loadMapList(): List<MiniMapData> {
             return transaction {
                 val list = ArrayList<MiniMapData>()
-                Maps.slice(Maps.name, Maps.id, Maps.fileName).selectAll().orderBy(Maps.id).forEach {
+                Maps.slice(Maps.name, Maps.id, Maps.fileName).selectAll().forEach {
                     list.add(MiniMapData(it))
                 }
                 list

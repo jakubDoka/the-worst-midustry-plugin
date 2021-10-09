@@ -1,25 +1,19 @@
 package the_worst_one.db
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import the_worst_one.cfg.Config
 import the_worst_one.game.Users
 import mindustry_plugin_utils.Logger
 import org.junit.jupiter.api.Test
-import the_worst_one.cfg.Globals
 
 class DriverTest() {
+    private val ranks = Ranks()
+    private val driver = Driver("config/driver/config.json", ranks)
+    private val users = Users(driver, Logger("/"), ranks, Config())
 
     @Test
     fun init() {
-        runBlocking {
-            Globals.runLoggedGlobalScope {
-                throw Exception()
-            }
+        val u = users.test("ip", "name")
 
-            delay(10000)
-        }
+        assert(driver.users.search(u.inner).size == 1)
     }
 }

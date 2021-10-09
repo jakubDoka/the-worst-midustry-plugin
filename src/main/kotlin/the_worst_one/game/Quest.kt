@@ -131,8 +131,8 @@ abstract class Quest(val name: String) {
                 }
             })
 
-
-                Globals.runLoggedGlobalScope {
+            runBlocking {
+                GlobalScope.launch {
                     while(true) {
                         val user = input.receive() ?: break
                         var someRanksLost = false
@@ -176,6 +176,7 @@ abstract class Quest(val name: String) {
                         }
                     }
                 }
+            }
         }
     }
 }

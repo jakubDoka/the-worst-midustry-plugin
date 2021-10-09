@@ -1,6 +1,6 @@
 package the_worst_one.game.commands
 
-import the_worst_one.Main
+import Main
 import org.junit.jupiter.api.Test
 import the_worst_one.game.Interpreter
 import mindustry.mod.Mod
