@@ -110,7 +110,6 @@ class Driver(override var configPath: String = "config/driver.json", val ranks: 
     fun login(id: Long, player: Player) {
         transaction {
             Users.update({ Users.id eq id }){
-                it[name] = player.name
                 it[uuid] = player.uuid()
                 it[ip] = player.con.address
             }

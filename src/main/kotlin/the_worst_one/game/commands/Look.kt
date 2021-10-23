@@ -7,15 +7,18 @@ class Look(val ranks: Ranks, val users: Users): Command("look") {
     override fun run(args: Array<String>): Enum<*> {
         return when(args[0]) {
             "rank" -> {
-                if (!user!!.data.specials.contains(args[1]) && user!!.data.rank.name != args[1]) {
+                val user = user!!
+                val name = args[1]
+                if (!user.data.specials.contains(name) && user.data.rank.name != name) {
                     send("look.rank.denied")
                     Generic.Denied
-                } else if (!ranks.containsKey(args[1])){
+                } else if (!ranks.containsKey(name)){
                     send("look.rank.notFound")
                     Generic.NotFound
                 } else {
-                    user!!.data.display = ranks[args[1]]!!
-                    users.reload(user!!)
+                    user.mount?.kill()
+                    user.data.display = ranks[name]!!
+                    users.reload(user)
                     send("look.rank.success")
                     Generic.Success
                 }

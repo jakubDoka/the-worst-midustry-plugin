@@ -13,6 +13,7 @@ import java.lang.Integer.min
 import mindustry.net.Administration.ActionType;
 import mindustry_plugin_utils.Logger
 import mindustry.gen.Call
+import mindustry.type.Category
 import java.lang.StringBuilder
 import java.util.regex.Pattern
 
@@ -60,6 +61,13 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger, val config:
             }
 
             if(it.tile == null) return@addActionFilter true
+
+            if(user.data.rank == ranks.default) {
+                if(it.tile.block().category == Category.logic) {
+                    user.send("action.newcomerLogic")
+                    return@addActionFilter false
+                }
+            }
 
             val banMessage = banned[it.tile]
             if(banMessage != null) {

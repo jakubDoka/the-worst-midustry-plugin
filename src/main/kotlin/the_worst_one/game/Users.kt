@@ -110,7 +110,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
 
 
     fun reload(target: User) {
-        save(target)
+        if(!target.paralyzed) save(target)
         load(target.inner, target.data)
     }
 

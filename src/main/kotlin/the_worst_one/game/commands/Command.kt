@@ -17,7 +17,7 @@ import java.lang.Long.parseLong
 import java.util.function.Consumer
 
 // Command is a base class for all commands and implements some common utility
-abstract class Command(val name: String, val control: Ranks.Control = Ranks.Control.Minimal) {
+abstract class Command(val name: String, val control: Ranks.Control = Ranks.Control.Minimal, val alias: String? = null) {
     val args = Bundle().get("$name.args")
     var kind: Kind = Kind.Game
 

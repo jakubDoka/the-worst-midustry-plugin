@@ -1,10 +1,8 @@
 package the_worst_one.cfg
 
 import io.netty.channel.ChannelFactory
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import mindustry.content.UnitTypes
 import mindustry.entities.Effect
 import mindustry.type.UnitType
@@ -18,9 +16,15 @@ import java.util.function.BiFunction
 import mindustry.content.Fx
 import mindustry.content.Items
 import mindustry.type.Item
+import mindustry_plugin_utils.Logger
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
+import java.lang.management.ThreadInfo
+
+import java.lang.management.ManagementFactory
+import java.lang.management.ThreadMXBean
+
 
 // most of the content should be moved to utils
 object Globals {
@@ -29,6 +33,8 @@ object Globals {
     const val botRoot = root + "bot/"
     const val coreIcon = "\uF869"
     const val hudDelimiter = "[gray]|[]"
+
+    val logger = Logger(root + "logger/config.json")
 
 
     // the magic it self
@@ -170,15 +176,41 @@ object Globals {
     private val channel = Channel<() -> Unit>()
 
     init {
-        runBlocking {
-            GlobalScope.launch {
-                while (true) {
-                    val fn = channel.receive()
-                    launch {
-                        fn()
+        Globals.runLoggedGlobalScope { coroutineScope {
+            while (true) {
+                val fn = channel.receive()
+                launch {
+                    fn()
+                }
+            }
+        } }
+
+        Globals.runLoggedGlobalScope {
+            while(true) {
+                val bean: ThreadMXBean = ManagementFactory.getThreadMXBean()
+                val threadIds: LongArray? = bean.findDeadlockedThreads()
+
+                if (threadIds == null) {
+                    delay(1000 * 10)
+                    continue
+                }
+
+                val infos: Array<ThreadInfo> = bean.getThreadInfo(threadIds)
+                for (info in infos) {
+                    println("Deadlock on thread ${info.threadId}")
+                    for(elem in info.stackTrace) {
+                        print(elem)
                     }
                 }
             }
+        }
+    }
+
+    fun runLoggedGlobalScope(forever: Boolean = true, fn: suspend () -> Unit) {
+        GlobalScope.launch {
+            do {
+                logger.run { runBlocking { fn() } }
+            } while (forever)
         }
     }
 

@@ -18,6 +18,8 @@ class User(val inner: Player, val data: Driver.RawUser, previous: Driver.RawUser
     var mount: Unit? = null
     val pets = mutableListOf<Pets.Pet>()
 
+    val paralyzed: Boolean get() = -1L == data.id
+
     init {
         if(paralyzed) {
             inner.name += data.rank.display
@@ -33,8 +35,6 @@ class User(val inner: Player, val data: Driver.RawUser, previous: Driver.RawUser
         data.uuid = inner.uuid()
         data.lastCommand = previous?.lastCommand ?: 0L
     }
-
-    val paralyzed: Boolean get() = -1L == data.id
 
     fun alert(titleKey: String, bundleKey: String, vararg arguments: Any, color: String = "orange") {
         alert(Templates.info(data.translate(titleKey), data.translate(bundleKey, *arguments), color))
