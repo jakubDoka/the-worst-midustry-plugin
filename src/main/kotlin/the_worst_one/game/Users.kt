@@ -111,6 +111,7 @@ class Users(private val driver: Driver, logger: Logger, val ranks: Ranks, val co
 
     fun reload(target: User) {
         if(!target.paralyzed) save(target)
+        target.mount?.kill()
         load(target.inner, target.data)
     }
 
