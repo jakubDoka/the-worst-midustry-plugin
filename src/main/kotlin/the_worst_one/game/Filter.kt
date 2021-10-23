@@ -60,14 +60,15 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger, val config:
                 return@addActionFilter false
             }
 
-            if(it.tile == null) return@addActionFilter true
-
             if(user.data.rank == ranks.default) {
-                if(it.tile.block().category == Category.logic) {
+                val block = it.tile?.block() ?: it.block
+                if(block != null && block.category == Category.logic) {
                     user.send("action.newcomerLogic")
                     return@addActionFilter false
                 }
             }
+
+            if(it.tile == null) return@addActionFilter true
 
             val banMessage = banned[it.tile]
             if(banMessage != null) {
