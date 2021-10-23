@@ -41,7 +41,9 @@ class Spawn: Command("spawn") {
                     user.mount = unit
                     send("spawn.mount.success")
                 } }, user.data.display.unitWarmUp.toFloat())
-
+                if (user.data.display.unitWarmUp != 0L) {
+                    send("spawn.mount.warmUp", user.data.display.unitWarmUp)
+                }
             }
         }
 
