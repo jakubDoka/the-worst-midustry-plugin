@@ -1,6 +1,8 @@
 package the_worst_one.game.commands
 
+import arc.Core
 import arc.util.Time
+import arc.util.Timer
 import the_worst_one.cfg.Globals
 import the_worst_one.cfg.Globals.time
 
@@ -28,13 +30,18 @@ class Spawn: Command("spawn") {
                     return Result.Recharge
                 }
 
-                val unit = unitType.create(user.inner.team())
-                unit.set(user.inner.unit().x, user.inner.unit().y)
-                user.inner.unit().kill()
-                user.inner.unit(unit)
-                unit.add()
-                user.mount = unit
-                send("spawn.mount.success")
+                user.data.stats.lastDeath = Time.millis()
+
+                Timer.schedule({ Core.app.post {
+                    val unit = unitType.create(user.inner.team())
+                    unit.set(user.inner.unit().x, user.inner.unit().y)
+                    user.inner.unit().kill()
+                    user.inner.unit(unit)
+                    unit.add()
+                    user.mount = unit
+                    send("spawn.mount.success")
+                } }, user.data.display.unitWarmUp.toFloat())
+
             }
         }
 

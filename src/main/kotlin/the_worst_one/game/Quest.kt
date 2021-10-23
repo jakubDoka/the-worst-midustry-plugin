@@ -123,7 +123,7 @@ abstract class Quest(val name: String) {
                         Driver.Users.select { Driver.Users.points greater user.points(ranks, driver.config.multiplier) }.count()
                     }
 
-                    return if(amount > v) {
+                    return if(amount >= v) {
                         user.translate("quest.lowOnLadder", amount, v)
                     } else {
                         complete

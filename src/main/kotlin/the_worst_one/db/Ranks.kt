@@ -134,6 +134,7 @@ class Ranks(override var configPath: String = "config/ranks.json"): HashMap<Stri
         val description: Map<String, String> = mapOf(),
         val unit: String = "",
         val unitRecharge: Long = 0,
+        val unitWarmUp: Long = 0,
         val pets: List<String> = listOf(),
     ) {
 
