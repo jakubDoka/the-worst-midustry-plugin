@@ -84,8 +84,8 @@ class Search(val ranks: Ranks): Command("search") {
     fun string(id: Any, name: Any, rank: Ranks.Rank?): String {
         return when(kind) {
             Kind.Cmd -> "$id - $name - ${rank?.name}"
-            Kind.Game -> "[gray]id: [white]$id [gray]name: [white]$name [gray]rank: ${rank?.postfix ?: "[red]fuck"}"
-            Kind.Discord -> "**id:** $id **name:** $name **rank:** ${rank?.name ?: "~~fuck~~"}"
+            Kind.Game -> "[gray]id: [white]$id [gray]name: [white]$name [gray]rank: ${rank?.postfix ?: "[red]<doom>"}"
+            Kind.Discord -> "**id:** $id **name:** $name **rank:** ${rank?.name ?: "~~doom~~"}"
         }
     }
 

@@ -12,6 +12,7 @@ import the_worst_one.cfg.Globals
 
 import java.lang.RuntimeException
 import java.lang.StringBuilder
+import java.util.*
 
 
 //handler registers the_worst_one.game and terminal commands
@@ -23,10 +24,13 @@ class Handler(val users: Users, val logger: Logger, val config: Config, private 
     }
 
     // registers any command
-    fun reg(command: Command) {
+    fun reg(command: Command, name: String? = null, recursion: Boolean = false) {
+        if (command.alias != null && !recursion) {
+            reg(command, command.alias, true)
+        }
         if (Command.Kind.Game == kind) {
             try {
-                inner.register<Player>(command.name, command.args, "") { a, p ->
+                inner.register<Player>(name ?: command.name, command.args, "") { a, p ->
                     val user = users[p.uuid()]
                     if (user == null) {
                         p.sendMessage("[yellow] Please report that you saw this message. You cannot use command due to the bug in server.")

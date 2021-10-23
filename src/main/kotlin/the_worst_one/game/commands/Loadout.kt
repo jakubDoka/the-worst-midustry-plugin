@@ -18,7 +18,7 @@ import java.io.File
 import java.lang.Exception
 import java.lang.Long.min
 
-class Loadout(val driver: Driver, val docks: Docks, val voting: Voting, override var configPath: String): Command("loadout"), Reloadable, Globals.Log {
+class Loadout(val driver: Driver, val docks: Docks, val voting: Voting, override var configPath: String): Command("loadout", alias = "l"), Reloadable, Globals.Log {
     override val prefix = "loadout"
     val store = Voting.Session.Data(1, 5, "store", "loadout", Ranks.Perm.Store)
     val load = Voting.Session.Data(1, 5, "load", "loadout", Ranks.Perm.Load)
@@ -61,15 +61,21 @@ class Loadout(val driver: Driver, val docks: Docks, val voting: Voting, override
                 }
                 "store" -> {
                     val code =
-                        if(args[2].startsWith("where ")) {
-                            args[2].substring("where ".length)
-                        } else {
-                            if(Globals.item(args[2]) == null) {
-                                send("loadout.invalidItem", Globals.listItems())
-                                send("loadout.suggestWhere")
-                                return Result.InvalidItem
+                        when {
+                            args[2].startsWith("where ") -> {
+                                args[2].substring("where ".length)
                             }
-                            "itemName == \"${args[2]}\""
+                            args[2] == "all" -> {
+                                "itemAmount > 0"
+                            }
+                            else -> {
+                                if(Globals.item(args[2]) == null) {
+                                    send("loadout.invalidItem", Globals.listItems())
+                                    send("loadout.suggestWhere")
+                                    return Result.InvalidItem
+                                }
+                                "itemName == \"${args[2]}\""
+                            }
                         }
 
                     try {
@@ -90,7 +96,7 @@ class Loadout(val driver: Driver, val docks: Docks, val voting: Voting, override
         } else if (args[0] == "status") {
             alert("loadout.title", "placeholder", driver.items.format())
         } else {
-            send("wrongOption", "load store state")
+            send("loadout.invalidArgAmount")
             return Generic.Mismatch
         }
 
@@ -140,6 +146,4 @@ class Loadout(val driver: Driver, val docks: Docks, val voting: Voting, override
     enum class Result {
         InvalidItem, Redundant, Error
     }
-
-
 }

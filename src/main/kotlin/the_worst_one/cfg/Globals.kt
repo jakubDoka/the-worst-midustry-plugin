@@ -188,7 +188,12 @@ object Globals {
         Globals.runLoggedGlobalScope {
             while(true) {
                 val bean: ThreadMXBean = ManagementFactory.getThreadMXBean()
-                val threadIds: LongArray = bean.findDeadlockedThreads() // Returns null if no threads are deadlocked.
+                val threadIds: LongArray? = bean.findDeadlockedThreads()
+
+                if (threadIds == null) {
+                    delay(1000 * 10)
+                    continue
+                }
 
                 val infos: Array<ThreadInfo> = bean.getThreadInfo(threadIds)
                 for (info in infos) {
@@ -197,7 +202,6 @@ object Globals {
                         print(elem)
                     }
                 }
-                delay(1000 * 60)
             }
         }
     }

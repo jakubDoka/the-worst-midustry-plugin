@@ -8,6 +8,7 @@ import the_worst_one.game.Users
 import mindustry_plugin_utils.Templates
 
 import org.apache.commons.codec.digest.DigestUtils
+import java.util.*
 import java.util.regex.Pattern
 
 // Account is the_worst_one.game only
@@ -144,7 +145,7 @@ class Account(val driver: Driver, val users: Users, val discord: Discord, val co
                             user.inner.name = user.data.name // l 124
                         }
                         driver.login(tid, user.inner)
-                        driver.logout(user.data)
+                        if(!user.paralyzed) driver.logout(user.data)
                         users.reload(user)
                         send("account.login.success")
                         Generic.Success
