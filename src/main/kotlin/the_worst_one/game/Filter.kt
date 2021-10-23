@@ -61,7 +61,7 @@ class Filter(val users: Users, val ranks: Ranks, val logger: Logger, val config:
             }
 
             if(user.data.rank == ranks.default) {
-                val block = it.tile?.block() ?: it.block
+                val block = it.block ?: it.tile?.block()
                 if(block != null && block.category == Category.logic) {
                     user.send("action.newcomerLogic")
                     return@addActionFilter false
