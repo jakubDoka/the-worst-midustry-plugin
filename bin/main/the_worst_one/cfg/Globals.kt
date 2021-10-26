@@ -225,19 +225,15 @@ object Globals {
         runBlocking { channel.send(fn) }
     }
 
-    fun unitBullet(ptr: String, unit: UnitType?): BulletType {
+    fun unitBullet(ptr: String, unit: UnitType): BulletType {
         var ut = unit
         val parts = ptr.split("-")
         if (parts.size != 2) {
             throw Exception("the unit bullet has to be unit name, and weapon index separated by '-'")
         }
-
         if (parts[0] != "self") {
             ut = unit(parts[0]) ?: throw Exception("unit '${parts[0]}' does not exist")
-        } else if(ut == null) {
-            throw Exception("cannot use 'self' here")
         }
-
         if (!Strings.canParsePositiveInt(parts[1])) {
             throw Exception("cannot parse ${parts[1]} to integer")
         }

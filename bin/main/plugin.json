@@ -1,0 +1,8 @@
+{
+  "name": "the-worst-mindustry-plugin",
+  "displayName": "TWS plugin",
+  "author": "Jakub Dóka",
+  "description": "The worst plugin ever made, enjoy",
+  "version": "0.0.1",
+  "main": "the_worst_one.Main"
+}
