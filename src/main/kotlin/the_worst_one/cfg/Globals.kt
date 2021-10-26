@@ -1,8 +1,10 @@
 package the_worst_one.cfg
 
+import arc.util.Strings
 import io.netty.channel.ChannelFactory
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import mindustry.content.Bullets
 import mindustry.content.UnitTypes
 import mindustry.entities.Effect
 import mindustry.type.UnitType
@@ -15,6 +17,7 @@ import java.io.File
 import java.util.function.BiFunction
 import mindustry.content.Fx
 import mindustry.content.Items
+import mindustry.entities.bullet.BulletType
 import mindustry.type.Item
 import mindustry_plugin_utils.Logger
 import kotlin.reflect.KClass
@@ -80,6 +83,10 @@ object Globals {
 
     fun effect(name: String): Effect? {
         return property(name, Fx::class.java) as? Effect?
+    }
+
+    fun bullet(name: String): BulletType? {
+        return property(name, Bullets::class.java) as? BulletType?
     }
 
     fun item(name: String): Item? {
@@ -216,6 +223,30 @@ object Globals {
 
     fun run(fn: () -> Unit) {
         runBlocking { channel.send(fn) }
+    }
+
+    fun unitBullet(ptr: String, unit: UnitType?): BulletType {
+        var ut = unit
+        val parts = ptr.split("-")
+        if (parts.size != 2) {
+            throw Exception("the unit bullet has to be unit name, and weapon index separated by '-'")
+        }
+
+        if (parts[0] != "self") {
+            ut = unit(parts[0]) ?: throw Exception("unit '${parts[0]}' does not exist")
+        } else if(ut == null) {
+            throw Exception("cannot use 'self' here")
+        }
+
+        if (!Strings.canParsePositiveInt(parts[1])) {
+            throw Exception("cannot parse ${parts[1]} to integer")
+        }
+        val idx = parts[1].toInt() - 1
+        if (idx >= ut.weapons.size || idx < 0) {
+            throw Exception("the maximal weapon is ${ut.weapons.size} and min is 1, you entered ${parts[1]}")
+        }
+
+        return ut.weapons[idx].bullet
     }
 
     interface Log {

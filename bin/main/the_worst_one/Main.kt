@@ -23,6 +23,7 @@ class Main : Plugin(), Reloadable {
     private val ranks = Ranks(Globals.root + "ranks/config.json")
     private val driver = Driver(Globals.root + "databaseDriver/config.json", ranks)
     private val users = Users(driver, logger, ranks, config)
+    private val pewpew = PewPew(logger, users, Globals.root + "weapons/config.json")
     private val filter = Filter(users, ranks, logger, config)
     private val voting = Voting(users)
     private val pets = Pets(users, logger, Globals.root + "pets/config.json")
@@ -43,6 +44,7 @@ class Main : Plugin(), Reloadable {
         "loadout" to loadout,
         "buildcore" to buildcore,
         "boost" to boost,
+        "pewpew" to pewpew,
     )
 
     private val discord = Discord(Globals.root + "bot/config.json", logger, driver, users) {
